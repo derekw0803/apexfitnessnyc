@@ -32,7 +32,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </a>
           <ul className="nav-links">
             <li><a href="/">Home</a></li>
-            <li><a href="/about">About Me</a></li>
+            <li><a href="/about-me">About Me</a></li>
             <li><a href="/training">Training</a></li>
             <li><a href="/pricing">Pricing</a></li>
           </ul>
@@ -64,7 +64,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <div>
                 <h4 className="footer-h4">Platform</h4>
                 <ul className="footer-links">
-                  <li><a href="/about">About the Founder</a></li>
+                  <li><a href="/about-me">About the Founder</a></li>
                   <li><a href="/training">Tailored Workouts</a></li>
                   <li><a href="/pricing">Membership Pricing</a></li>
                   <li><a href="/">The APEX Method</a></li>
