@@ -190,6 +190,7 @@ export default function AboutPage() {
                   border: activeTab === tab ? '2px solid var(--gold)' : '1px solid var(--border)',
                   background: activeTab === tab ? 'var(--gold-dim)' : 'transparent',
                   color: activeTab === tab ? 'var(--gold)' : 'var(--muted)',
+                  cursor: 'pointer',
                   transition: 'all 0.2s',
                 }}
               >
