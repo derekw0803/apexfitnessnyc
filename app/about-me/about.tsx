@@ -1,13 +1,13 @@
 const FOUNDER_TIMELINE = [
   {
-    year: '2011',
-    title: 'Started Coaching in Commercial Gyms',
-    body: 'I learned quickly that most fitness systems were built for people in their twenties. The older clients who needed the most help were getting generic plans, generic motivation, and predictable injuries.',
+    year: 'UofM',
+    title: 'University of Michigan — Kinesiology',
+    body: 'Studied the science of human movement, exercise physiology, and strength adaptation. Built the academic foundation that every APEX protocol is written on.',
   },
   {
-    year: '2016',
-    title: 'Shifted to Men 45-70 Full Time',
-    body: 'I narrowed my focus to the demographic the industry kept overlooking. That meant studying endocrine changes, recovery decay, insulin sensitivity, and how to build programs that respect aging joints.',
+    year: '2021',
+    title: 'Started Personal Training',
+    body: 'Began coaching clients one-on-one, quickly specializing in men over 40 who were being failed by generic fitness programs not built for their biology.',
   },
   {
     year: '2025',
@@ -327,9 +327,8 @@ export default function AboutMePage() {
           <div className="section-label">Training + AI</div>
           <h2 className="section-h2">The Program Logic Behind The Dashboard.</h2>
           <p className="section-sub" style={{ marginBottom: '3rem' }}>
-            The training route currently redirects, so I pulled the program structure from the
-            existing training content and paired it with the agentic dashboard pattern already used
-            in the app.
+            Three phases, twelve weeks, one system. Every block builds on the last to produce
+            measurable body-composition change without destroying your joints.
           </p>
 
           <div
