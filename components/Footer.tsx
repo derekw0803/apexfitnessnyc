@@ -13,7 +13,7 @@ export default function Footer() {
             Precision training, hormone optimization, guaranteed results.
           </p>
         </div>
-        <div>
+        {/* <div>
           <h4 className={styles.footerH4}>Platform</h4>
           <ul className={styles.footerLinks}>
             <li><a href="/about-me">About the Founder</a></li>
@@ -22,8 +22,8 @@ export default function Footer() {
             <li><a href="/">The APEX Method</a></li>
             <li><a href="/">Scientific Research</a></li>
           </ul>
-        </div>
-        <div>
+        </div> */}
+        {/* <div>
           <h4 className={styles.footerH4}>Members</h4>
           <ul className={styles.footerLinks}>
             <li><a href="/dashboard">Member Portal</a></li>
@@ -31,8 +31,8 @@ export default function Footer() {
             <li><a href="/dashboard">Nutrition Dashboard</a></li>
             <li><button>Support &amp; FAQ</button></li>
           </ul>
-        </div>
-        <div>
+        </div> */}
+        {/* <div>
           <h4 className={styles.footerH4}>Private List</h4>
           <p style={{ color: 'var(--muted)', fontSize: '0.8rem', lineHeight: 1.5, marginBottom: '1rem' }}>
             Join our private mailing list for exclusive insights on longevity and performance.
@@ -53,14 +53,14 @@ export default function Footer() {
               fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer',
             }}>JOIN</button>
           </div>
-        </div>
+        </div> */}
       </div>
       <div className={styles.footerBottom}>
         <p>© 2026 APEX Human Performance. All rights reserved. New York City.</p>
-        <div className={styles.footerBottomLinks}>
+        {/* <div className={styles.footerBottomLinks}>
           <a href="/">Privacy Policy</a>
           <a href="/">Terms of Service</a>
-        </div>
+        </div> */}
       </div>
     </footer>
   );

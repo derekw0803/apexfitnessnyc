@@ -14,7 +14,7 @@ const barlowCondensed = Barlow_Condensed({
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
 export const metadata: Metadata = {
-  title: 'Apex Health | Agentic Training',
+  title: 'Apex Health & Training',
   description: 'Next Generation Health Optimization for Men 45-70',
   icons: { icon: '/favicon.ico' },
 };
@@ -24,8 +24,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={`${bebasNeue.variable} ${barlowCondensed.variable} ${inter.variable}`}>
       <body>
         <div className="noise" />
-        <div id="cursor" />
-        <div id="cursor-ring" />
+        <div id="cursor" suppressHydrationWarning />
+        <div id="cursor-ring" suppressHydrationWarning />
 
         <Nav />
 
@@ -35,11 +35,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </div>
 
         {/* ── Floating chat button ── */}
-        <button className="chat-btn" aria-label="Open chat">
+        {/* <button className="chat-btn" aria-label="Open chat">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
           </svg>
-        </button>
+        </button> */}
 
         {/* ── Custom cursor script ── */}
         <script dangerouslySetInnerHTML={{ __html: `

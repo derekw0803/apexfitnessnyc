@@ -13,8 +13,8 @@ export default function Nav() {
         <li><a href="/pricing">Pricing</a></li>
       </ul>
       <div className={styles.navActions}>
-        <button className={`${styles.navCtaBtn} ${styles.ghost}`}>Log In</button>
-        <a className={`${styles.navCtaBtn} ${styles.solid}`} href="/pricing">Start Now — $89/mo</a>
+        {/* <button className={`${styles.navCtaBtn} ${styles.ghost}`}>Log In</button> */}
+        <a className={`${styles.navCtaBtn} ${styles.solid}`} href="/pricing">Start Now</a>
         <div className={styles.navHamburger} id="hamburger">
           <span /><span /><span />
         </div>
