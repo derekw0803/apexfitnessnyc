@@ -88,7 +88,7 @@ export default function PricingPage() {
                   </li>
                 ))}
               </ul>
-              <button
+              {/* <button
                 style={{
                   marginTop: '3rem', width: '100%', padding: '1.25rem', border: 'none', cursor: 'pointer',
                   background: plan.highlight ? 'var(--gold)' : 'rgba(200,168,75,0.1)',
@@ -99,13 +99,13 @@ export default function PricingPage() {
                 onClick={() => setSelected(i)}
               >
                 Select Protocol
-              </button>
+              </button> */}
             </div>
           ))}
         </div>
 
         {/* Checkout */}
-        <div style={{ marginTop: '6rem', background: 'var(--charcoal)', border: '1px solid var(--border)', padding: '4rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4rem' }}>
+        {/* <div style={{ marginTop: '6rem', background: 'var(--charcoal)', border: '1px solid var(--border)', padding: '4rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4rem' }}>
           <div>
             <h3 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '2.5rem', color: 'var(--cream)', marginBottom: '1rem', letterSpacing: '0.05em' }}>Secure Checkout</h3>
             <p style={{ color: 'var(--muted)', fontSize: '0.9rem', lineHeight: 1.6, marginBottom: '2rem' }}>
@@ -150,7 +150,7 @@ export default function PricingPage() {
               Confirm &amp; Pay Securely
             </button>
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   );

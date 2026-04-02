@@ -175,7 +175,7 @@ export default function AboutPage() {
           <div className="section-label">Agentic AI Engine</div>
           <h2 className="section-h2">Your Training,<br />Optimized By AI.</h2>
           <p className="section-sub" style={{ marginBottom: '3rem' }}>
-            The APEX Agentic Engine is not a chatbot. It is a performance data synthesizer — analyzing your logged sets, reps, and weight trajectories to automatically generate your next optimized training block. No coach necessary. No guesswork.
+            The APEX  Engine is not a chatbot. It is a performance data synthesizer — analyzing your logged sets, reps, and weight trajectories to automatically generate your next optimized training block. No coach necessary. No guesswork.
           </p>
 
           {/* Dashboard toggle */}
@@ -218,7 +218,7 @@ export default function AboutPage() {
           {activeTab === 'dashboard' && (
             <div>
               {/* Neural Link Header */}
-              <div style={{ background: 'var(--charcoal)', border: '1px solid var(--gold)', padding: '1.25rem 2rem', marginBottom: '1px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              {/* <div style={{ background: 'var(--charcoal)', border: '1px solid var(--gold)', padding: '1.25rem 2rem', marginBottom: '1px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                   <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#4CAF50', boxShadow: '0 0 8px #4CAF50', animation: 'pulse 2s infinite' }} />
                   <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', fontSize: '0.82rem', color: 'var(--gold)' }}>
@@ -226,9 +226,9 @@ export default function AboutPage() {
                   </span>
                 </div>
                 <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '0.75rem', color: 'var(--muted)', letterSpacing: '0.1em' }}>
-                  AGENTIC ENGINE v2.1 · SYNCED
+                 ENGINE v1.0 · SYNCED
                 </span>
-              </div>
+              </div> */}
 
               {/* Data matrix table */}
               <div style={{ overflowX: 'auto', background: 'var(--charcoal)', border: '1px solid var(--border)', borderTop: 'none' }}>

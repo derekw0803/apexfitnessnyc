@@ -43,31 +43,31 @@ const MONTHS = [
   {
     label: 'Month 1 — Foundation',
     days: [
-      { day: 'DAY 1', title: 'Push — Chest & Triceps', exercises: ['Machine Chest Press 3×10', 'Incline DB Press 4×8-10', 'Cable Lateral Raises 3×15', 'Tricep Pushdowns 4×12-15'] },
-      { day: 'DAY 2', title: 'Pull — Back & Biceps', exercises: ['Lat Pulldown 4×10-12', 'Chest-Supported Row 4×8-10', 'DB Hammer Curls 4×12', 'Face Pulls 3×15'] },
-      { day: 'DAY 3', title: 'Legs — Quads & Calves', exercises: ['Hack Squat / Leg Press 4×10-12', 'Leg Extensions 3×15', 'Standing Calf Raises 4×15', 'Ab Wheel Rollouts 3×10'] },
-      { day: 'DAY 4', title: 'Upper — Chest & Back Volume', exercises: ['Cable Crossover 3×15', 'Straight Arm Pulldown 3×15', 'DB Flyes 3×12', 'Preacher Curls 3×15'] },
-      { day: 'DAY 5', title: 'Posterior — Hamstrings & Core', exercises: ['Romanian Deadlifts 4×8-10', 'Lying Leg Curls 3×12-15', 'Kettlebell Swings 4×20', 'Plank Variations 3×60s'] },
+      { day: 'DAY 1', title: 'Push — Chest & Triceps' },
+      { day: 'DAY 2', title: 'Pull — Back & Biceps'},
+      { day: 'DAY 3', title: 'Legs — Quads & Calves'},
+      { day: 'DAY 4', title: 'Upper — Chest & Back Volume'},
+      { day: 'DAY 5', title: 'Posterior — Hamstrings & Core'},
     ],
   },
   {
     label: 'Month 2 — Accelerate',
     days: [
-      { day: 'DAY 1', title: 'Strength + MetCon — Full Body Power', exercises: ['Trap Bar Deadlifts 4×6-8', 'Kettlebell Swings 4×20', 'Assault Bike Sprint 4×30s', 'Sled Push 5×20m'] },
-      { day: 'DAY 2', title: 'Aerobic Base — Mitochondrial Density', exercises: ['Rowing Ergo 5×500m (2m rest)', 'Incline Treadmill Walk 20 mins', 'Plank Variations 3×60s', 'Russian Twists 3×20'] },
-      { day: 'DAY 3', title: 'Hypertrophy — Shoulders & Arms', exercises: ['DB Push Press 4×8', 'Lateral Raises 4×15', 'Barbell Curls 3×12', 'Tricep Extensions 3×12'] },
-      { day: 'DAY 4', title: 'Athletic — Leg Power Endurance', exercises: ['Walking Lunges 4×12/leg', 'Box Jumps 4×10', 'Heavy Sandbag Carry 5×20m', 'Goblet Squats 3×12'] },
-      { day: 'DAY 5', title: 'The Furnace — Benchmark Circuit', exercises: ['Burpees 4×15', 'DB Snatches 4×10/arm', 'Battle Ropes 4×30s', 'Farmers Carry 4×40m'] },
+      { day: 'DAY 1', title: 'Strength + MetCon — Full Body Power'},
+      { day: 'DAY 2', title: 'Aerobic Base — Mitochondrial Density'},
+      { day: 'DAY 3', title: 'Hypertrophy — Shoulders & Arms'},
+      { day: 'DAY 4', title: 'Athletic — Leg Power Endurance'},
+      { day: 'DAY 5', title: 'The Furnace — Benchmark Circuit'},
     ],
   },
   {
     label: 'Month 3 — Peak',
     days: [
-      { day: 'DAY 1', title: 'Max Upper — Heavy Tension', exercises: ['Weighted Pull-Ups 4×6', 'Overhead Barbell Press 4×6-8', 'Chest-Supported Row 3×8', 'Skullcrushers 3×10'] },
-      { day: 'DAY 2', title: 'Slow Legs — Eccentric Control', exercises: ['Leg Press (4s down) 4×8', 'Bulgarian Split Squats 3×10/leg', 'Seated Calf Raises 4×15', 'Romanian Deadlifts 4×8-10'] },
-      { day: 'DAY 3', title: 'Mobility & Core — Joint Bulletproofing', exercises: ['Ab Wheel Rollouts 3×10', 'Hanging Leg Raises 3×Failure', 'Jefferson Curls (Light) 3×8', '90/90 Hip Switches 3×10/side'] },
-      { day: 'DAY 4', title: 'Pump Matrix — Blood Flow', exercises: ['Cable Crossover 4×15-20', 'Cable Lateral Raise 4×15-20', 'Straight Arm Pulldown 4×15-20', 'Preacher Curls 4×15-20'] },
-      { day: 'DAY 5', title: 'Functional Output — Dynamic Carry', exercises: ['Heavy Sandbag Over Shoulder 4×8', 'Farmers Carry 4×40m', 'Suitcase Deadlifts 3×10/side', 'Trap Bar Deadlifts 4×6-8'] },
+      { day: 'DAY 1', title: 'Max Upper — Heavy Tension'},
+      { day: 'DAY 2', title: 'Slow Legs — Eccentric Control'},
+      { day: 'DAY 3', title: 'Mobility & Core — Joint Bulletproofing'},
+      { day: 'DAY 4', title: 'Pump Matrix — Blood Flow'},
+      { day: 'DAY 5', title: 'Functional Output — Dynamic Carry'},
     ],
   },
 ];
@@ -136,23 +136,22 @@ export default function Home() {
             YOU ARE<br />NOT DONE<br />YET.
           </h1>
           <p style={{ color: 'var(--text)', fontSize: '1.1rem', lineHeight: 1.7, maxWidth: 560, marginBottom: '2.5rem' }}>
-            The only NYC fitness system engineered exclusively for men 45–70.
+            The best NYC fitness system engineered exclusively for men 45–70.
             Precision training, hormone-optimized nutrition, and a documented 90-day body
-            transformation — <em style={{ color: 'var(--gold)', fontStyle: 'normal' }}>guaranteed or your money back.</em>
+            transformation — <em style={{ color: 'var(--gold)', fontStyle: 'normal' }}>.</em>
           </p>
           <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-            <a className="btn-gold" href="/pricing">Start Your Transformation →</a>
+            <a className="btn-gold" href="/pricing">Start Your Transformation</a>
             <a className="btn-outline" href="/training">See Real Results</a>
           </div>
         </div>
-        <div style={{ position: 'absolute', bottom: '2.5rem', left: '5vw', display: 'flex', alignItems: 'center', gap: '0.5rem', fontFamily: "'Barlow Condensed', sans-serif", fontSize: '0.75rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--muted)', animation: 'bounce 2s infinite' }}>
-          <span>Scroll</span>
+        <a href="#ticker" style={{ position: 'absolute', bottom: '2.5rem', left: '5vw', display: 'flex', alignItems: 'center', gap: '0.5rem', fontFamily: "'Barlow Condensed', sans-serif", fontSize: '0.75rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--muted)', animation: 'bounce 2s infinite' }}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9" /></svg>
-        </div>
+        </a>
       </section>
 
       {/* ── Ticker ───────────────────────────────────── */}
-      <div className="ticker-wrap">
+      <div id="ticker"className="ticker-wrap">
         <div className="ticker-track">
           {[...TICKER_ITEMS, ...TICKER_ITEMS].map((item, i) => (
             <span key={i} className="ticker-item">
@@ -267,11 +266,11 @@ export default function Home() {
                 <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '0.7rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--gold)', marginBottom: '0.4rem' }}>{d.day}</div>
                 <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '0.95rem', color: 'var(--cream)', marginBottom: '1rem', lineHeight: 1.3 }}>{d.title}</div>
                 <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                  {d.exercises.map((ex, j) => (
+                  {/* {d.exercises.map((ex, j) => (
                     <li key={j} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', color: 'var(--muted)', fontSize: '0.82rem' }}>
                       <span style={{ color: 'var(--gold)', marginTop: '2px', flexShrink: 0 }}>›</span>{ex}
                     </li>
-                  ))}
+                  ))} */}
                 </ul>
               </div>
             ))}
@@ -285,7 +284,7 @@ export default function Home() {
           <div className="section-label">The Standard</div>
           <h2 className="section-h2">Why APEX Wins</h2>
           <p className="section-sub" style={{ marginBottom: '3rem' }}>
-            Stop wasting time on generic apps meant for 20-year-olds or overpriced trainers who
+            Stop wasting time on generic apps or overpriced trainers who
             just count your reps. Look at the data.
           </p>
           <div style={{ overflowX: 'auto' }}>
