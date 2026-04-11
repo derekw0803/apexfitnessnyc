@@ -1,0 +1,52 @@
+.header {
+  max-width: 600px;
+  margin-bottom: 4rem;
+}
+
+.form {
+  max-width: 860px;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 0.75rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.input {
+  background: var(--charcoal);
+  border: 1px solid var(--border);
+  color: var(--cream);
+  padding: 1rem 1.25rem;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 0.95rem;
+  letter-spacing: 0.05em;
+  width: 100%;
+  transition: border-color 0.2s;
+}
+.input::placeholder { color: var(--muted); }
+.input:focus {
+  outline: none;
+  border-color: var(--gold);
+}
+
+@media (max-width: 600px) {
+  .row { grid-template-columns: 1fr; gap: 1.5rem; }
+}

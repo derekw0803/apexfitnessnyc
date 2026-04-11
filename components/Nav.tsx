@@ -11,6 +11,7 @@ export default function Nav() {
         <li><a href="/about-me">About Me</a></li>
         <li><a href="/training">Training</a></li>
         <li><a href="/pricing">Pricing</a></li>
+        <li><a href="/contact">Contact</a></li>
       </ul>
       <div className={styles.navActions}>
         {/* <button className={`${styles.navCtaBtn} ${styles.ghost}`}>Log In</button> */}
