@@ -4,14 +4,14 @@ import { useState } from 'react';
 const PLANS = [
   {
     name: '1-Month Program',
-    price: 120,
+    price: 300,
     desc: 'Full access to the 4-week APEX foundation protocol and nutrition dashboard.',
     features: ['Month 1 Training Regiment', 'Macro Tracking Dashboard', 'Weekly Progress Tracking', 'Community Access'],
     highlight: false,
   },
   {
     name: '2-Month Program',
-    price: 200,
+    price: 450,
     desc: 'Access to Month 1 (Foundation) and Month 2 (MetCon) programs.',
     features: ['Everything in 1-Month', 'Month 2 MetCon Curriculum', 'Custom Meal Plans', 'Priority Support'],
     highlight: true,
@@ -19,9 +19,9 @@ const PLANS = [
   },
   {
     name: '3-Month Program',
-    price: 320,
+    price: 600,
     desc: 'The complete 12-week APEX lifecycle, including Longevity and Peak performance.',
-    features: ['Everything in 2-Month', 'Month 3 Longevity Curriculum', 'Direct Line to Medical Staff', 'Guaranteed 90-Day Results'],
+    features: ['Everything in 2-Month', 'Month 3 Longevity Curriculum', 'Guaranteed 90-Day Results'],
     highlight: false,
   },
 ];

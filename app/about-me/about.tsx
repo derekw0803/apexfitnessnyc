@@ -40,40 +40,40 @@ const TRAINING_BLOCKS = [
   },
 ];
 
-const AGENTIC_DASHBOARD = [
-  {
-    week: 'W1',
-    movement: 'Trap Bar Deadlift',
-    target: '4x6 @ 185 lbs',
-    actual: '4x6 @ 185 lbs',
-    next: '4x6 @ 195 lbs',
-    status: 'On target',
-  },
-  {
-    week: 'W1',
-    movement: 'Weighted Pull-Ups',
-    target: '4x6 @ BW+25',
-    actual: '3x6 @ BW+25',
-    next: '4x5 @ BW+25',
-    status: 'Slight lag',
-  },
-  {
-    week: 'W1',
-    movement: 'Overhead Press',
-    target: '4x6 @ 115 lbs',
-    actual: '4x6 @ 120 lbs',
-    next: '4x6 @ 125 lbs',
-    status: 'Ahead',
-  },
-  {
-    week: 'W2',
-    movement: 'Romanian Deadlift',
-    target: '4x8 @ 155 lbs',
-    actual: '4x8 @ 155 lbs',
-    next: '4x8 @ 165 lbs',
-    status: 'On target',
-  },
-];
+// const AGENTIC_DASHBOARD = [
+//   {
+//     week: 'W1',
+//     movement: 'Trap Bar Deadlift',
+//     target: '4x6 @ 185 lbs',
+//     actual: '4x6 @ 185 lbs',
+//     next: '4x6 @ 195 lbs',
+//     status: 'On target',
+//   },
+//   {
+//     week: 'W1',
+//     movement: 'Weighted Pull-Ups',
+//     target: '4x6 @ BW+25',
+//     actual: '3x6 @ BW+25',
+//     next: '4x5 @ BW+25',
+//     status: 'Slight lag',
+//   },
+//   {
+//     week: 'W1',
+//     movement: 'Overhead Press',
+//     target: '4x6 @ 115 lbs',
+//     actual: '4x6 @ 120 lbs',
+//     next: '4x6 @ 125 lbs',
+//     status: 'Ahead',
+//   },
+//   {
+//     week: 'W2',
+//     movement: 'Romanian Deadlift',
+//     target: '4x8 @ 155 lbs',
+//     actual: '4x8 @ 155 lbs',
+//     next: '4x8 @ 165 lbs',
+//     status: 'On target',
+//   },
+// ];
 
 const STATUS_STYLES: Record<string, { color: string; background: string }> = {
   'On target': {
@@ -131,14 +131,14 @@ export default function AboutMePage() {
               me to create this platform, and help guys past 40 reclaim the body and health they
               once had.
             </p>
-            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginTop: '2rem' }}>
+            {/* <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginTop: '2rem' }}>
               <a className="btn-gold" href="/pricing">
                 Start Your Protocol
               </a>
               <a className="btn-outline" href="/about">
-                View Original About Page
+                {/* View Original About Page 
               </a>
-            </div>
+            </div> */}
           </div>
 
           <div
@@ -162,10 +162,10 @@ export default function AboutMePage() {
             </div>
             <div style={{ display: 'grid', gap: '1rem' }}>
               {[
-                '15+ years coaching men in high-performance environments',
+                '5+ years coaching men in high-performance environments',
                 'Programming built around male aging physiology',
                 'Training, nutrition, recovery, and progression in one system',
-                'Agentic AI dashboard layered into the coaching workflow',
+                // 'Agentic AI dashboard layered into the coaching workflow',
               ].map((item) => (
                 <div
                   key={item}
@@ -302,7 +302,7 @@ export default function AboutMePage() {
                   marginBottom: '1.25rem',
                 }}
               >
-                Client B
+                Client Beta
               </div>
               <p
                 style={{
@@ -377,7 +377,7 @@ export default function AboutMePage() {
             ))}
           </div>
 
-          <div
+          {/* <div
             style={{
               border: '1px solid rgba(200, 168, 75, 0.22)',
               background: 'rgba(5, 8, 16, 0.55)',
@@ -437,7 +437,7 @@ export default function AboutMePage() {
                 </tr>
               </thead>
               <tbody>
-                {AGENTIC_DASHBOARD.map((row) => (
+                {/* {AGENTIC_DASHBOARD.map((row) => (
                   <tr key={`${row.week}-${row.movement}`} style={{ borderBottom: '1px solid var(--border)' }}>
                     <td style={{ padding: '1rem 1.1rem', color: 'var(--gold)' }}>{row.week}</td>
                     <td style={{ padding: '1rem 1.1rem', color: 'var(--cream)' }}>{row.movement}</td>
@@ -460,10 +460,10 @@ export default function AboutMePage() {
                       </span>
                     </td>
                   </tr>
-                ))}
-              </tbody>
+                ))} */}
+              {/* </tbody>
             </table>
-          </div>
+          </div> */ }
         </div>
       </section>
 

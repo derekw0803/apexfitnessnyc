@@ -15,7 +15,7 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
 export const metadata: Metadata = {
   title: 'Apex Health & Training',
-  description: 'Next Generation Health Optimization for Men 45-70',
+  description: 'Next Generation Health Optimization for Men 40+',
   icons: { icon: '/favicon.ico' },
 };
 

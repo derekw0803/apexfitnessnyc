@@ -5,7 +5,7 @@ const CREDENTIALS = [
   {
     num: '01',
     title: 'Certified Strength & Conditioning Specialist (CSCS)',
-    body: 'The gold standard in performance coaching — earned through rigorous study of biomechanics, exercise physiology, and periodization science. Applied specifically to the hormonal and musculoskeletal realities of men 45–70.',
+    body: 'The gold standard in performance coaching — earned through rigorous study of biomechanics, exercise physiology, and periodization science. Applied specifically to the hormonal and musculoskeletal realities of men 40+.',
   },
   {
     num: '02',
@@ -14,13 +14,13 @@ const CREDENTIALS = [
   },
   {
     num: '03',
-    title: '15+ Years Coaching Men 45–70 in NYC',
-    body: 'Over a decade and a half spent exclusively coaching the demographic most underserved by the fitness industry. Every protocol in APEX traces directly back to thousands of real client outcomes.',
+    title: '5+ Years Coaching Men 40+ in NYC',
+    body: 'Over five years spent exclusively coaching the demographic most underserved by the fitness industry.',
   },
   {
     num: '04',
     title: 'Applied Endocrinology & Longevity Research',
-    body: 'Deep study of the clinical research on testosterone decline, sarcopenia, inflammaging, and metabolic shifts after 45. The APEX system is built on peer-reviewed science, not gym folklore.',
+    body: 'Deep study of the clinical research on testosterone decline, sarcopenia, inflammaging, and metabolic shifts after 40. The APEX system is built on peer-reviewed science, not gym folklore.',
   },
 ];
 
@@ -48,13 +48,13 @@ const PHILOSOPHY = [
 ];
 
 // Agentic AI Dashboard data
-const NEURAL_MATRIX = [
-  { week: 'W1', movement: 'Trap Bar Deadlift', target: '4×6 @ 185 lbs', actual: '4×6 @ 185 lbs', aiNext: '4×6 @ 195 lbs', status: 'ON TARGET' },
-  { week: 'W1', movement: 'Weighted Pull-Ups', target: '4×6 @ BW+25', actual: '3×6 @ BW+25', aiNext: '4×5 @ BW+25', status: 'SLIGHT LAG' },
-  { week: 'W1', movement: 'Overhead Press', target: '4×6 @ 115 lbs', actual: '4×6 @ 120 lbs', aiNext: '4×6 @ 125 lbs', status: 'AHEAD' },
-  { week: 'W2', movement: 'Romanian Deadlift', target: '4×8 @ 155 lbs', actual: '4×8 @ 155 lbs', aiNext: '4×8 @ 165 lbs', status: 'ON TARGET' },
-  { week: 'W2', movement: 'Cable Lateral Raise', target: '4×15 @ 15 lbs', actual: '4×15 @ 17.5 lbs', aiNext: '4×15 @ 20 lbs', status: 'AHEAD' },
-];
+// const NEURAL_MATRIX = [
+//   { week: 'W1', movement: 'Trap Bar Deadlift', target: '4×6 @ 185 lbs', actual: '4×6 @ 185 lbs', aiNext: '4×6 @ 195 lbs', status: 'ON TARGET' },
+//   { week: 'W1', movement: 'Weighted Pull-Ups', target: '4×6 @ BW+25', actual: '3×6 @ BW+25', aiNext: '4×5 @ BW+25', status: 'SLIGHT LAG' },
+//   { week: 'W1', movement: 'Overhead Press', target: '4×6 @ 115 lbs', actual: '4×6 @ 120 lbs', aiNext: '4×6 @ 125 lbs', status: 'AHEAD' },
+//   { week: 'W2', movement: 'Romanian Deadlift', target: '4×8 @ 155 lbs', actual: '4×8 @ 155 lbs', aiNext: '4×8 @ 165 lbs', status: 'ON TARGET' },
+//   { week: 'W2', movement: 'Cable Lateral Raise', target: '4×15 @ 15 lbs', actual: '4×15 @ 17.5 lbs', aiNext: '4×15 @ 20 lbs', status: 'AHEAD' },
+// ];
 
 const STATUS_COLORS: Record<string, string> = {
   'ON TARGET': '#C8A84B',
@@ -84,10 +84,10 @@ export default function AboutPage() {
           {/* Stat card column */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             {[
-              { val: '15+', label: 'Years Coaching Men 45–70', sub: 'Exclusively NYC-based clientele' },
-              { val: '2,400+', label: 'APEX Members Transformed', sub: '97% program completion rate' },
+              { val: '10+', label: 'Years Coaching Men 40–70', sub: 'Exclusively NYC-based clientele' },
+              // { val: '2,400+', label: 'APEX Members Transformed', sub: '97% program completion rate' },
               { val: '22 lbs', label: 'Average Fat Loss', sub: 'Across 90-day program cohort' },
-              { val: '+34%', label: 'Testosterone Improvement', sub: 'From 90-day bloodwork comparisons' },
+              // { val: '+34%', label: 'Testosterone Improvement', sub: 'From 90-day bloodwork comparisons' },
             ].map((s, i) => (
               <div key={i} style={{ background: 'var(--charcoal)', border: '1px solid var(--border)', padding: '1.5rem 2rem', display: 'flex', alignItems: 'center', gap: '2rem' }}>
                 <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '2.5rem', color: 'var(--gold)', lineHeight: 1, minWidth: '5rem' }}>{s.val}</div>
@@ -102,10 +102,10 @@ export default function AboutPage() {
       </section>
 
       {/* ── My Story ───────────────────────────────── */}
-      <section className="section" style={{ background: 'var(--charcoal)' }}>
+      {/* <section className="section" style={{ background: 'var(--charcoal)' }}>
         <div className="section-inner" style={{ maxWidth: 900 }}>
           <div className="section-label">The Story</div>
-          <h2 className="section-h2">Why I Built APEX.</h2>
+          <h2 className="section-h2">Why I Built APEX.</h2>ff
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4rem', marginTop: '3rem' }}>
             <div style={{ color: 'var(--muted)', lineHeight: 1.9, fontSize: '0.97rem' }}>
               <p style={{ marginBottom: '1.5rem' }}>
@@ -125,7 +125,7 @@ export default function AboutPage() {
             </div>
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* ── Credentials ────────────────────────────── */}
       <section className="section">
@@ -172,31 +172,30 @@ export default function AboutPage() {
       {/* ── Agentic AI Training Dashboard ──────────── */}
       <section className="section">
         <div className="section-inner">
-          <div className="section-label">Agentic AI Engine</div>
-          <h2 className="section-h2">Your Training,<br />Optimized By AI.</h2>
+          {/* <div className="section-label">Agentic AI Engine</div> */}
+          {/* <h2 className="section-h2">Your Training,<br />Optimized By AI.</h2> */}
           <p className="section-sub" style={{ marginBottom: '3rem' }}>
-            The APEX  Engine is not a chatbot. It is a performance data synthesizer — analyzing your logged sets, reps, and weight trajectories to automatically generate your next optimized training block. No coach necessary. No guesswork.
+            {/* The APEX  Engine is not a chatbot. It is a performance data synthesizer — analyzing your logged sets, reps, and weight trajectories to automatically generate your next optimized training block. No coach necessary. No guesswork. */}
           </p>
 
           {/* Dashboard toggle */}
           <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '2.5rem' }}>
-            {(['curriculum', 'dashboard'] as const).map((tab) => (
+        
               <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
+                
                 style={{
                   fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, letterSpacing: '0.12em',
                   textTransform: 'uppercase', fontSize: '0.82rem', padding: '0.65rem 1.75rem',
-                  border: activeTab === tab ? '2px solid var(--gold)' : '1px solid var(--border)',
-                  background: activeTab === tab ? 'var(--gold-dim)' : 'transparent',
-                  color: activeTab === tab ? 'var(--gold)' : 'var(--muted)',
+                  border: '2px solid var(--gold)' ,
+                  background:  'var(--gold-dim)' ,
+                  color:  'var(--gold)' ,
                   cursor: 'pointer',
                   transition: 'all 0.2s',
                 }}
               >
-                {tab === 'curriculum' ? 'Curriculum View' : 'Performance Dashboard'}
+                Curriculum View
               </button>
-            ))}
+       
           </div>
 
           {activeTab === 'curriculum' && (
@@ -231,7 +230,7 @@ export default function AboutPage() {
               </div> */}
 
               {/* Data matrix table */}
-              <div style={{ overflowX: 'auto', background: 'var(--charcoal)', border: '1px solid var(--border)', borderTop: 'none' }}>
+              {/* <div style={{ overflowX: 'auto', background: 'var(--charcoal)', border: '1px solid var(--border)', borderTop: 'none' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: "'Barlow Condensed', sans-serif" }}>
                   <thead>
                     <tr style={{ background: 'rgba(200,168,75,0.05)' }}>
@@ -263,10 +262,10 @@ export default function AboutPage() {
                     ))}
                   </tbody>
                 </table>
-              </div>
+              </div> */}
 
               {/* Synthesize button */}
-              <div style={{ marginTop: '1.5rem', display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+              {/* <div style={{ marginTop: '1.5rem', display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
                 <button
                   style={{
                     fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, letterSpacing: '0.15em',
@@ -281,10 +280,10 @@ export default function AboutPage() {
                 <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '0.8rem', color: 'var(--muted)', letterSpacing: '0.08em' }}>
                   AI will generate a Target Optimized training block based on your logged data
                 </span>
-              </div>
+              </div> */}
 
               {/* Nutrition auto-regulate callout */}
-              <div style={{ marginTop: '2rem', background: 'rgba(200,168,75,0.06)', border: '1px solid rgba(200,168,75,0.25)', padding: '1.5rem 2rem', display: 'flex', alignItems: 'flex-start', gap: '1.5rem' }}>
+              {/* <div style={{ marginTop: '2rem', background: 'rgba(200,168,75,0.06)', border: '1px solid rgba(200,168,75,0.25)', padding: '1.5rem 2rem', display: 'flex', alignItems: 'flex-start', gap: '1.5rem' }}>
                 <span style={{ fontSize: '1.5rem', lineHeight: 1 }}>🧬</span>
                 <div>
                   <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--gold)', fontSize: '0.82rem', marginBottom: '0.4rem' }}>
@@ -294,7 +293,7 @@ export default function AboutPage() {
                     Macro targets are being calculated from your current bodyweight trajectory. A stalled weight-loss input will trigger a caloric reduction mapped precisely to your 7-Day Nutrition Protocol — no manual adjustments required.
                   </p>
                 </div>
-              </div>
+              </div> */}
             </div>
           )}
         </div>

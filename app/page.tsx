@@ -3,11 +3,10 @@ import { useEffect, useRef, useState } from 'react';
 
 const TICKER_ITEMS = [
   '90-Day Guaranteed Transformation',
-  'Men 45–70 Only',
-  '$120/Month — Less Than Any Competitor',
+  'Men 40+ Only',
+  '$300/Month — Less Than Any Competitor',
   'Hormone-Optimized Nutrition',
   "NYC's #1 Senior Men's Program",
-  '2,400+ Members Strong',
   '97% Completion Rate',
 ];
 
@@ -24,18 +23,18 @@ const SCIENCE = [
   },
   {
     num: '03',
-    title: 'Insulin Sensitivity Drops After 45',
+    title: 'Insulin Sensitivity Drops After 40',
     body: 'Carbohydrate tolerance decreases significantly with age. Eating carbs the same way you did at 30 leads to fat storage, energy crashes, and prediabetes risk. APEX nutrition times carbohydrates precisely around training windows and eliminates them at night — matching food to the biological clock of the aging male metabolism.',
   },
   {
     num: '04',
     title: 'Recovery Takes Longer — and That\'s OK',
-    body: 'After 45, cortisol clearance slows and mTOR signaling (muscle repair) takes 20–40% longer than in younger men. Generic programs ignore this and lead to chronic injury. APEX builds in mandatory recovery days, periodizes intensity across 3-week cycles, and programs sleep as a training variable — because that\'s exactly what it is.',
+    body: 'After 40, cortisol clearance slows and mTOR signaling (muscle repair) takes 20–40% longer than in younger men. Generic programs ignore this and lead to chronic injury. APEX builds in mandatory recovery days, periodizes intensity across 3-week cycles, and programs sleep as a training variable — because that\'s exactly what it is.',
   },
   {
     num: '05',
     title: 'Inflammation: The Root of "Feeling Old"',
-    body: 'Chronic low-grade inflammation — called inflammaging — is the primary driver of fatigue, joint pain, slow recovery, and disease risk in men over 45. APEX\'s anti-inflammatory nutrition protocol (Omega-3s, turmeric, Mediterranean-style eating) directly targets this mechanism, often producing dramatic changes in how members feel within the first 2 weeks.',
+    body: 'Chronic low-grade inflammation — called inflammaging — is the primary driver of fatigue, joint pain, slow recovery, and disease risk in men over 40. APEX\'s anti-inflammatory nutrition protocol (Omega-3s, turmeric, Mediterranean-style eating) directly targets this mechanism, often producing dramatic changes in how members feel within the first 2 weeks.',
   },
 ];
 
@@ -73,21 +72,21 @@ const MONTHS = [
 ];
 
 const COMPARE = [
-  { feature: 'Target Demographic', apex: 'Men 45–70', apps: '"Everyone" (Usually 18-35)', trainer: 'General Population' },
+  { feature: 'Target Demographic', apex: 'Men 40+', apps: '"Everyone" (Usually 18-35)', trainer: 'General Population' },
   { feature: 'Periodization', apex: '4-Week Phase Adapted', apps: 'Randomized Daily Workouts', trainer: 'Basic Linear Progression' },
   { feature: 'Joint & CNS Focus', apex: 'Mandatory Recovery & Mobility', apps: 'High-Impact Only', trainer: 'Varies heavily by trainer' },
   { feature: 'Hormone Optimization', apex: 'Science-backed Protocols', apps: 'Ignored', trainer: 'Seldom understood' },
-  { feature: 'Cost', apex: '$120 / mo', apps: '$15 – $30 / mo', trainer: '$800+ / mo' },
+  { feature: 'Cost', apex: '$300 / mo', apps: '$15 – $30 / mo', trainer: '$800+ / mo' },
 ];
 
 const FAQS = [
   {
     q: "I haven't trained in years. Am I too old or injury-prone for this?",
-    a: "Standard fitness programs are designed for 20-somethings and will destroy your joints. APEX is strictly engineered for the biomechanics of men 45–70. We prioritize joint-sparing movements (like trap bar deadlifts instead of conventional) and eccentric control to build armor around your joints.",
+    a: "Standard fitness programs are designed for 20-somethings and will destroy your joints. APEX is strictly engineered for the biomechanics of men 40+. We prioritize joint-sparing movements (like trap bar deadlifts instead of conventional) and eccentric control to build armor around your joints.",
   },
   {
     q: 'How is this different from hiring a personal trainer?',
-    a: 'Most personal trainers lack formal knowledge of age-related hormonal decline. APEX is built on clinical research specific to men 45–70 and costs a fraction of in-person training — with a results guarantee that no trainer offers.',
+    a: 'Most personal trainers lack formal knowledge of age-related hormonal decline. APEX is built on clinical research specific to men 40+ and costs a fraction of in-person training — with a results guarantee that no trainer offers.',
   },
   {
     q: 'What if I travel frequently or miss days?',
@@ -130,15 +129,15 @@ export default function Home() {
       <section style={{ minHeight: 'calc(100vh - 72px)', display: 'flex', alignItems: 'center', padding: '0 5vw', position: 'relative', zIndex: 1 }}>
         <div style={{ maxWidth: 1300, margin: '0 auto', width: '100%' }}>
           <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '0.8rem', letterSpacing: '0.25em', textTransform: 'uppercase', color: 'var(--gold)', marginBottom: '1.5rem' }}>
-            New York City · Men 45–70 · Est. 2025
+            New York City · Men 40–70 · Est. 2025
           </p>
           <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 'clamp(4rem, 10vw, 9rem)', lineHeight: 0.9, color: 'var(--cream)', letterSpacing: '0.02em', marginBottom: '2rem' }}>
             YOU ARE<br />NOT DONE<br />YET.
           </h1>
           <p style={{ color: 'var(--text)', fontSize: '1.1rem', lineHeight: 1.7, maxWidth: 560, marginBottom: '2.5rem' }}>
-            The best NYC fitness system engineered exclusively for men 45–70.
+            The best NYC fitness system engineered exclusively for men 40+.
             Precision training, hormone-optimized nutrition, and a documented 90-day body
-            transformation — <em style={{ color: 'var(--gold)', fontStyle: 'normal' }}>.</em>
+            transformation<em style={{ color: 'var(--gold)', fontStyle: 'normal' }}>.</em>
           </p>
           <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
             <a className="btn-gold" href="/pricing">Start Your Transformation</a>
@@ -167,9 +166,9 @@ export default function Home() {
         <div className="section-inner">
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '3rem' }}>
             {[
-              { val: 90, suffix: 'd', label: 'Transformation Window', sub: 'Guaranteed visible results or full refund' },
-              { val: 120, prefix: '$', label: 'Per Month', sub: 'vs. $195 NYC gym average — 54% less' },
-              { val: 2400, suffix: '+', label: 'NYC Members', sub: 'Men who chose to finish what they started' },
+              // { val: 90, suffix: 'd', label: 'Transformation Window', sub: 'Guaranteed visible results or full refund' },
+              { val: 300, prefix: '$', label: 'Per Month', sub: 'vs. $800 NYC personal trainer average — 62% less' },
+              // { val:, suffix: '+', label: 'NYC Members', sub: 'Men who chose to finish what they started' },
               { val: 97, suffix: '%', label: 'Completion Rate', sub: 'vs. 22% industry average for fitness programs' },
               { val: 22, suffix: 'lb', label: 'Avg. Fat Loss', sub: 'Average across 90-day program completers' },
             ].map((s, i) => (
@@ -189,11 +188,11 @@ export default function Home() {
       <section className="section">
         <div className="section-inner">
           <div className="section-label">The Science</div>
-          <h2 className="section-h2">Why 45 Is Different.</h2>
+          <h2 className="section-h2">Why 40 Is Different.</h2>
           <p className="section-sub" style={{ marginBottom: '4rem' }}>
             APEX isn&apos;t a modified general fitness program. It&apos;s a system built from the ground up
             around the endocrinology, musculoskeletal changes, and metabolic shifts that define
-            male physiology after 45.
+            male physiology after 40.
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
             {SCIENCE.map((s) => (
@@ -229,9 +228,9 @@ export default function Home() {
               </div>
             ))}
           </div>
-          <p style={{ color: 'var(--muted)', fontSize: '0.75rem', marginTop: '1.5rem' }}>
+          {/* <p style={{ color: 'var(--muted)', fontSize: '0.75rem', marginTop: '1.5rem' }}>
             Data from 2,400+ APEX member cohort, 2025. Testosterone data from 90-day bloodwork comparison (n=312 Elite tier members).
-          </p>
+          </p> */}
         </div>
       </section>
 

@@ -20,13 +20,13 @@ const TRAINING_PHASES = [
 ];
 
 const SAMPLE_WEEK = [
-  { day: 'Monday', focus: 'Lower Power', movements: 'Trap Bar Deadlift · Leg Press · Romanian Deadlift · Leg Curl' },
-  { day: 'Tuesday', focus: 'Upper Push', movements: 'Overhead Press · Incline DB Press · Cable Lateral Raise · Tricep Pushdown' },
-  { day: 'Wednesday', focus: 'Active Recovery', movements: 'Mobility Circuit · Sled Walk · Foam Roll Protocol' },
-  { day: 'Thursday', focus: 'Upper Pull', movements: 'Weighted Pull-Up · Cable Row · Face Pull · Hammer Curl' },
-  { day: 'Friday', focus: 'MetCon', movements: 'Assault Bike Intervals · Farmers Carry · Rowing Ergo · Sled Push' },
-  { day: 'Saturday', focus: 'Accessory', movements: 'Rotator Cuff Work · Hip Flexor · Band Work · Core Circuit' },
-  { day: 'Sunday', focus: 'Rest', movements: 'Full recovery — sleep, nutrition, and stress management.' },
+  { day: 'Monday', focus: 'Lower Power', },
+  { day: 'Tuesday', focus: 'Upper Push', },
+  { day: 'Wednesday', focus: 'Active Recovery', },
+  { day: 'Thursday', focus: 'Upper Pull', },
+  { day: 'Friday', focus: 'MetCon', },
+  { day: 'Saturday', focus: 'Accessory', },
+  { day: 'Sunday', focus: 'Rest', },
 ];
 
 export default function TrainingPage() {
@@ -138,7 +138,7 @@ export default function TrainingPage() {
       </section>
 
       {/* ── Sample Week ── */}
-      <section className="section">
+      {/* <section className="section">
         <div className="section-inner">
           <div className="section-label">Sample Schedule</div>
           <h2 className="section-h2">A Week Inside APEX.</h2>
@@ -180,14 +180,12 @@ export default function TrainingPage() {
                 >
                   {day.focus}
                 </div>
-                <div style={{ color: 'var(--muted)', fontSize: '0.9rem', lineHeight: 1.6 }}>
-                  {day.movements}
-                </div>
+                
               </div>
             ))}
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* ── CTA ── */}
       <section className="section" style={{ background: 'var(--charcoal)' }}>

@@ -9,7 +9,7 @@ export default function Footer() {
             APE<span style={{ color: 'var(--cream)' }}>X</span>
           </a>
           <p style={{ color: 'var(--muted)', fontSize: '0.85rem', lineHeight: 1.6, marginTop: '1rem' }}>
-            The exclusive NYC fitness system engineered specifically for men 45–70.
+            The exclusive NYC fitness system engineered specifically for men 40+.
             Precision training, hormone optimization, guaranteed results.
           </p>
         </div>
