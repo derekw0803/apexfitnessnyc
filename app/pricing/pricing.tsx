@@ -13,7 +13,7 @@ const PLANS = [
     name: '2-Month Program',
     price: 450,
     desc: 'Access to Month 1 (Foundation) and Month 2 (MetCon) programs.',
-    features: ['Everything in 1-Month', 'Month 2 MetCon Curriculum', 'Custom Meal Plans', 'Priority Support'],
+    features: ['Everything in 1-Month', 'Month 2 MetCon Curriculum' , 'Priority Support'],
     highlight: true,
     badge: 'Most Popular',
   },
@@ -24,7 +24,23 @@ const PLANS = [
     features: ['Everything in 2-Month', 'Month 3 Longevity Curriculum', 'Guaranteed 90-Day Results'],
     highlight: false,
   },
+  {
+    name: '1-on-1 Coaching',
+    price: 200,
+    desc: 'Personalized coaching sessions tailored to your individual needs and goals.',
+    features: ['1 hour one-on-one coaching', 'Customized workout plans', 'Accountability and support'],
+    highlight: false,
+  },
+  {
+    name: 'Customized nutrition plans',
+    price: 500,
+    desc: 'Personalized nutrition plans tailored to your individual needs and goals.',
+    features: ['Included macros', 'Customized meal plans', 'dietary restriction support', 'weekly, monthly check-ins'],
+    highlight: false,
+  }
 ];
+
+
 
 export default function PricingPage() {
   const [selected, setSelected] = useState(1);
