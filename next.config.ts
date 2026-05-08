@@ -7,6 +7,7 @@ const nextConfig: NextConfig = {
     output: 'export',
     basePath: '/apexfitnessnyc',
     assetPrefix: '/apexfitnessnyc/',
+    trailingSlash: true,
   }),
 };
 

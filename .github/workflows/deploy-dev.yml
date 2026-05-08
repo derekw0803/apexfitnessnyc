@@ -31,6 +31,9 @@ jobs:
         env:
           STATIC_EXPORT: true
 
+      - name: Create 404 fallback for client-side routing
+        run: cp out/index.html out/404.html
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
