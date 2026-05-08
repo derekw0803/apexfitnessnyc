@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import Link from 'next/link';
 import styles from './Nav.module.css';
 
 export default function Nav() {
@@ -8,18 +9,18 @@ export default function Nav() {
   return (
     <>
       <nav id="nav" className={styles.nav}>
-        <a className="nav-logo" href="/">
+        <Link className="nav-logo" href="/">
           APE<span style={{ color: 'var(--cream)' }}>X</span>
-        </a>
+        </Link>
         <ul className={styles.navLinks}>
-          <li><a href="/">Home</a></li>
-          <li><a href="/about-me">About Me</a></li>
-          <li><a href="/training">Training</a></li>
-          <li><a href="/pricing">Pricing</a></li>
-          <li><a href="/contact">Contact</a></li>
+          <li><Link href="/">Home</Link></li>
+          <li><Link href="/about-me">About Me</Link></li>
+          <li><Link href="/training">Training</Link></li>
+          <li><Link href="/pricing">Pricing</Link></li>
+          <li><Link href="/contact">Contact</Link></li>
         </ul>
         <div className={styles.navActions}>
-          <a className={`${styles.navCtaBtn} ${styles.solid}`} href="/pricing">Start Now</a>
+          <Link className={`${styles.navCtaBtn} ${styles.solid}`} href="/pricing">Start Now</Link>
           <button
             className={`${styles.navHamburger} ${open ? styles.navHamburgerOpen : ''}`}
             id="hamburger"
@@ -46,15 +47,15 @@ export default function Nav() {
             </svg>
           </button>
           <ul className={styles.drawerLinks}>
-            <li><a href="/" onClick={() => setOpen(false)}>Home</a></li>
-            <li><a href="/about-me" onClick={() => setOpen(false)}>About Me</a></li>
-            <li><a href="/training" onClick={() => setOpen(false)}>Training</a></li>
-            <li><a href="/pricing" onClick={() => setOpen(false)}>Pricing</a></li>
-            <li><a href="/contact" onClick={() => setOpen(false)}>Contact</a></li>
+            <li><Link href="/" onClick={() => setOpen(false)}>Home</Link></li>
+            <li><Link href="/about-me" onClick={() => setOpen(false)}>About Me</Link></li>
+            <li><Link href="/training" onClick={() => setOpen(false)}>Training</Link></li>
+            <li><Link href="/pricing" onClick={() => setOpen(false)}>Pricing</Link></li>
+            <li><Link href="/contact" onClick={() => setOpen(false)}>Contact</Link></li>
           </ul>
-          <a className={styles.drawerCta} href="/pricing" onClick={() => setOpen(false)}>
+          <Link className={styles.drawerCta} href="/pricing" onClick={() => setOpen(false)}>
             Start Now
-          </a>
+          </Link>
         </div>
       )}
     </>
