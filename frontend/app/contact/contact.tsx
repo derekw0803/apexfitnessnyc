@@ -1,17 +1,26 @@
 'use client';
-import { useState } from 'react';
+
 import styles from './contact.module.css';
+import useContact from './useContact';
 
 export default function ContactPage() {
-  const [form, setForm] = useState({ firstName: '', lastName: '', phone: '', email: '' });
+  const {
+    form,
+    setForm,
+    submit
+  } = useContact();
 
-  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  }
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setForm({
+      ...form,
+      [name]: value,
+    });
+  };
 
-  function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
+  function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
     e.preventDefault();
-    // TODO: wire up form submission
+    submit();
   }
 
   return (
@@ -25,7 +34,7 @@ export default function ContactPage() {
           </p>
         </div>
 
-        <form className={styles.form} onSubmit={handleSubmit} noValidate>
+        <form className={styles.form} noValidate onSubmit={handleSubmit}>
           <div className={styles.row}>
             <div className={styles.field}>
               <label className={styles.label} htmlFor="firstName">First Name</label>
@@ -83,7 +92,9 @@ export default function ContactPage() {
             </div>
           </div>
 
-          <button type="submit" className="btn-gold">Submit</button>
+          <button type="submit" className="btn-gold">
+            Submit
+          </button>
         </form>
       </div>
     </div>
