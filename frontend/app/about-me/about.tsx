@@ -109,6 +109,7 @@ export default function AboutMePage() {
           <div>
             <div className="section-label">About Me</div>
             <h1
+              id="hero"
               style={{
                 fontFamily: "'Bebas Neue', sans-serif",
                 fontSize: 'clamp(3.5rem, 7vw, 6.5rem)',
@@ -188,7 +189,7 @@ export default function AboutMePage() {
       <section className="section" style={{ background: 'var(--charcoal)' }}>
         <div className="section-inner">
           <div className="section-label">Founder Timeline</div>
-          <h2 className="section-h2">How The System Took Shape.</h2>
+          <h2 id="founder-timeline" className="section-h2">How The System Took Shape.</h2>
           <p className="section-sub" style={{ marginBottom: '3rem' }}>
             The coaching model came first. The software layer came later. Both came from the same
             frustration: older men were doing serious work with tools that were not built for them.
@@ -239,7 +240,7 @@ export default function AboutMePage() {
       <section className="section">
         <div className="section-inner">
           <div className="section-label">Client Stories</div>
-          <h2 className="section-h2">Real Results From Real Men.</h2>
+          <h2 id="results" className="section-h2">Real Results From Real Men.</h2>
           <p className="section-sub" style={{ marginBottom: '3rem' }}>
             The proof is in the people. Here is what two of our clients have to say about their
             experience with the APEX system.
@@ -325,7 +326,7 @@ export default function AboutMePage() {
       <section className="section" style={{ background: 'var(--charcoal)' }}>
         <div className="section-inner">
           <div className="section-label">Training + AI</div>
-          <h2 className="section-h2">The Program Logic Behind The Dashboard.</h2>
+          <h2 id="training-logic" className="section-h2">The Program Logic Behind The Dashboard.</h2>
           <p className="section-sub" style={{ marginBottom: '3rem' }}>
             Three phases, twelve weeks, one system. Every block builds on the last to produce
             measurable body-composition change without destroying your joints.

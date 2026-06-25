@@ -46,6 +46,11 @@ export default function Footer() {
             <li>
               <Link href="/contact">Send a Message</Link>
             </li>
+            <li>
+              <a href="https://www.instagram.com/apex.fitnessnyc" target="_blank" rel="noopener noreferrer">
+                Instagram
+              </a>
+            </li>
           </ul>
         </div>
       </div>
@@ -55,6 +60,7 @@ export default function Footer() {
         <div className={styles.footerBottomLinks}>
           <Link href="/contact">Contact</Link>
           <Link href="/pricing">Get Started</Link>
+          <Link href="/privacy">Privacy Policy</Link>
         </div>
       </div>
     </footer>

@@ -72,11 +72,14 @@ const MONTHS = [
 ];
 
 const COMPARE = [
-  { feature: 'Target Demographic', apex: 'Men 40+', apps: '"Everyone" (Usually 18-35)', trainer: 'General Population' },
-  { feature: 'Periodization', apex: '4-Week Phase Adapted', apps: 'Randomized Daily Workouts', trainer: 'Basic Linear Progression' },
-  { feature: 'Joint & CNS Focus', apex: 'Mandatory Recovery & Mobility', apps: 'High-Impact Only', trainer: 'Varies heavily by trainer' },
-  { feature: 'Hormone Optimization', apex: 'Science-backed Protocols', apps: 'Ignored', trainer: 'Seldom understood' },
-  { feature: 'Cost', apex: '$300 / mo', apps: '$15 – $30 / mo', trainer: '$800+ / mo' },
+  { feature: 'Target Demographic', apex: 'Men 40+', competitors: '"Everyone" — No Age-Specific Programming' },
+  { feature: 'Periodization', apex: '4-Week Phase Adapted', competitors: 'Randomized Workouts or Basic Linear Progression' },
+  { feature: 'Joint & CNS Focus', apex: 'Mandatory Recovery & Mobility', competitors: 'High-Impact Only, or Varies Heavily by Trainer' },
+  { feature: 'Hormone Optimization', apex: 'Science-backed Protocols', competitors: 'Ignored or Misunderstood' },
+  { feature: 'Nutrition & Meal Tracking', apex: 'Included — Macro Tracking Dashboard', competitors: 'Not Included' },
+  { feature: 'Weekly Progress Check-ins', apex: 'Included', competitors: 'Not Included' },
+  { feature: 'Community Access', apex: 'Included', competitors: 'Not Included' },
+  { feature: 'Cost', apex: '$300 / mo — All-Inclusive', competitors: '$15–$30/mo apps · $800+/mo trainers' },
 ];
 
 const FAQS = [
@@ -131,7 +134,7 @@ export default function Home() {
           <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '0.8rem', letterSpacing: '0.25em', textTransform: 'uppercase', color: 'var(--gold)', marginBottom: '1.5rem' }}>
             New York City · Men 40–70 · Est. 2025
           </p>
-          <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 'clamp(4rem, 10vw, 9rem)', lineHeight: 0.9, color: 'var(--cream)', letterSpacing: '0.02em', marginBottom: '2rem' }}>
+          <h1 id="hero" style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 'clamp(4rem, 10vw, 9rem)', lineHeight: 0.9, color: 'var(--cream)', letterSpacing: '0.02em', marginBottom: '2rem' }}>
             YOU ARE<br />NOT DONE<br />YET.
           </h1>
           <p style={{ color: 'var(--text)', fontSize: '1.1rem', lineHeight: 1.7, maxWidth: 560, marginBottom: '2.5rem' }}>
@@ -188,7 +191,7 @@ export default function Home() {
       <section className="section">
         <div className="section-inner">
           <div className="section-label">The Science</div>
-          <h2 className="section-h2">Why 40 Is Different.</h2>
+          <h2 id="why-40-is-different" className="section-h2">Why 40 Is Different.</h2>
           <p className="section-sub" style={{ marginBottom: '4rem' }}>
             APEX isn&apos;t a modified general fitness program. It&apos;s a system built from the ground up
             around the endocrinology, musculoskeletal changes, and metabolic shifts that define
@@ -238,7 +241,7 @@ export default function Home() {
       <section className="section">
         <div className="section-inner">
           <div className="section-label">Training Program</div>
-          <h2 className="section-h2">Built For Your Body.<br />Not a 25-Year-Old&apos;s.</h2>
+          <h2 id="training-preview" className="section-h2">Built For Your Body.<br />Not a 25-Year-Old&apos;s.</h2>
           <p className="section-sub" style={{ marginBottom: '3rem' }}>
             APEX workouts protect joints, maximize testosterone-boosting compound movements,
             and scale with your recovery capacity. Every exercise is video-guided and coach-reviewed.
@@ -281,7 +284,7 @@ export default function Home() {
       <section className="section" style={{ background: 'var(--charcoal)' }}>
         <div className="section-inner">
           <div className="section-label">The Standard</div>
-          <h2 className="section-h2">Why APEX Wins</h2>
+          <h2 id="why-apex-wins" className="section-h2">Why APEX Wins</h2>
           <p className="section-sub" style={{ marginBottom: '3rem' }}>
             Stop wasting time on generic apps or overpriced trainers who
             just count your reps. Look at the data.
@@ -292,8 +295,7 @@ export default function Home() {
                 <tr>
                   <th style={{ padding: '1rem 1.5rem', textAlign: 'left', fontSize: '0.8rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--muted)', borderBottom: '1px solid var(--border)' }}>Feature</th>
                   <th style={{ padding: '1rem 1.5rem', textAlign: 'center', fontSize: '0.8rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--gold)', borderBottom: '2px solid var(--gold)', background: 'var(--gold-dim)' }}>APEX Health</th>
-                  <th style={{ padding: '1rem 1.5rem', textAlign: 'center', fontSize: '0.8rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--muted)', borderBottom: '1px solid var(--border)' }}>Generic Apps</th>
-                  <th style={{ padding: '1rem 1.5rem', textAlign: 'center', fontSize: '0.8rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--muted)', borderBottom: '1px solid var(--border)' }}>Local Trainer</th>
+                  <th style={{ padding: '1rem 1.5rem', textAlign: 'center', fontSize: '0.8rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--muted)', borderBottom: '1px solid var(--border)' }}>Competitors</th>
                 </tr>
               </thead>
               <tbody>
@@ -301,8 +303,7 @@ export default function Home() {
                   <tr key={i} style={{ borderBottom: '1px solid var(--border)' }}>
                     <td style={{ padding: '1rem 1.5rem', color: 'var(--cream)', fontSize: '0.9rem' }}>{row.feature}</td>
                     <td style={{ padding: '1rem 1.5rem', textAlign: 'center', color: 'var(--gold)', fontSize: '0.88rem', fontWeight: 700, background: 'var(--gold-dim)' }}>{row.apex}</td>
-                    <td style={{ padding: '1rem 1.5rem', textAlign: 'center', color: 'var(--muted)', fontSize: '0.88rem' }}>{row.apps}</td>
-                    <td style={{ padding: '1rem 1.5rem', textAlign: 'center', color: 'var(--muted)', fontSize: '0.88rem' }}>{row.trainer}</td>
+                    <td style={{ padding: '1rem 1.5rem', textAlign: 'center', color: 'var(--muted)', fontSize: '0.88rem' }}>{row.competitors}</td>
                   </tr>
                 ))}
               </tbody>
@@ -318,7 +319,7 @@ export default function Home() {
       <section className="section">
         <div className="section-inner" style={{ maxWidth: 800 }}>
           <div className="section-label">Objections Overruled</div>
-          <h2 className="section-h2" style={{ marginBottom: '3rem' }}>Why APEX?</h2>
+          <h2 id="faq" className="section-h2" style={{ marginBottom: '3rem' }}>Why APEX?</h2>
           {FAQS.map((faq, i) => (
             <div key={i} style={{ borderBottom: '1px solid var(--border)' }}>
               <button

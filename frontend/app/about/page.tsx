@@ -72,7 +72,7 @@ export default function AboutPage() {
         <div className="section-inner" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6rem', alignItems: 'center' }}>
           <div>
             <div className="section-label">The Founder</div>
-            <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 'clamp(3.5rem, 6vw, 6rem)', lineHeight: 0.95, color: 'var(--cream)', letterSpacing: '0.02em', marginBottom: '2rem' }}>
+            <h1 id="hero" style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 'clamp(3.5rem, 6vw, 6rem)', lineHeight: 0.95, color: 'var(--cream)', letterSpacing: '0.02em', marginBottom: '2rem' }}>
               BUILT THIS<br />FOR YOU.<br /><span style={{ color: 'var(--gold)' }}>BECAUSE</span><br />I LIVED IT.
             </h1>
             <p style={{ color: 'var(--muted)', fontSize: '1rem', lineHeight: 1.8, maxWidth: 480, marginBottom: '2.5rem' }}>
@@ -131,7 +131,7 @@ export default function AboutPage() {
       <section className="section">
         <div className="section-inner">
           <div className="section-label">Credentials</div>
-          <h2 className="section-h2">The Expertise Behind<br />The System.</h2>
+          <h2 id="credentials" className="section-h2">The Expertise Behind<br />The System.</h2>
           <p className="section-sub" style={{ marginBottom: '4rem' }}>
             APEX is not built on gym hustle mythology. It&apos;s built on accredited science, clinical research, and over a decade of measured outcomes with real men.
           </p>
@@ -153,7 +153,7 @@ export default function AboutPage() {
       <section className="section" style={{ background: 'var(--charcoal)' }}>
         <div className="section-inner">
           <div className="section-label">The Method</div>
-          <h2 className="section-h2">The Four Pillars<br />of APEX.</h2>
+          <h2 id="philosophy" className="section-h2">The Four Pillars<br />of APEX.</h2>
           <p className="section-sub" style={{ marginBottom: '4rem' }}>
             Every decision in APEX training traces back to one of four core principles. No fluff. No filler. Just the mechanics of lasting physical transformation.
           </p>
@@ -303,7 +303,7 @@ export default function AboutPage() {
       <section className="section" style={{ background: 'var(--charcoal)' }}>
         <div className="section-inner" style={{ textAlign: 'center', maxWidth: 700, margin: '0 auto' }}>
           <div className="section-label" style={{ justifyContent: 'center' }}>Ready to Start?</div>
-          <h2 className="section-h2" style={{ marginBottom: '1.5rem' }}>If Not Now, When?</h2>
+          <h2 id="cta" className="section-h2" style={{ marginBottom: '1.5rem' }}>If Not Now, When?</h2>
           <p className="section-sub" style={{ margin: '0 auto 3rem', textAlign: 'center', maxWidth: 520 }}>
             You&apos;ve read the science. You&apos;ve seen the system. The only question is whether you&apos;re going to do something about it. The next 90 days are going to pass regardless.
           </p>

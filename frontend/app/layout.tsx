@@ -13,16 +13,46 @@ const barlowCondensed = Barlow_Condensed({
 });
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
+const SITE_URL = 'https://apexfitnessnyc.vercel.app';
+const SITE_TITLE = 'ApexFitnessNYC | Personal Training for Men 40+ in NYC';
+const SITE_DESCRIPTION =
+  'Next-generation health optimization for men 40+. Precision personal training, hormone-optimized nutrition, and a 90-day transformation system — in-person in New York City or online coaching nationwide.';
+
 export const metadata: Metadata = {
-  title: 'Apex Health & Training',
-  description: 'Next Generation Health Optimization for Men 40+',
-  icons: { icon: '/favicon.ico' },
+  metadataBase: new URL(SITE_URL),
+  title: SITE_TITLE,
+  description: SITE_DESCRIPTION,
+  openGraph: {
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+    url: SITE_URL,
+    siteName: 'ApexFitnessNYC',
+    type: 'website',
+  },
+};
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'ProfessionalService',
+  name: 'ApexFitnessNYC',
+  url: SITE_URL,
+  description:
+    'Personal training and online coaching for men 40+. In-person training in New York City; online coaching available nationwide.',
+  areaServed: [
+    { '@type': 'City', name: 'New York, NY' },
+    { '@type': 'Country', name: 'United States' },
+  ],
+  sameAs: ['https://www.instagram.com/apex.fitnessnyc'],
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${bebasNeue.variable} ${barlowCondensed.variable} ${inter.variable}`}>
       <body>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
         <div className="noise" />
         <div id="cursor" suppressHydrationWarning />
         <div id="cursor-ring" suppressHydrationWarning />

@@ -51,7 +51,7 @@ export default function PricingPage() {
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
           <div className="section-label" style={{ justifyContent: 'center' }}>Investment</div>
-          <h2 className="section-h2" style={{ margin: '0.5rem 0' }}>The Price of Greatness</h2>
+          <h2 id="pricing" className="section-h2" style={{ margin: '0.5rem 0' }}>The Price of Greatness</h2>
           <p className="section-sub" style={{ margin: '0 auto', maxWidth: 600 }}>
             Choose the protocol that fits your commitment level. Cancel anytime. No hidden fees,
             just guaranteed physical transformation.

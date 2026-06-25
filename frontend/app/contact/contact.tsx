@@ -1,5 +1,7 @@
 'use client';
 
+import { useState } from 'react';
+import Link from 'next/link';
 import styles from './contact.module.css';
 import useContact from './useContact';
 
@@ -9,6 +11,7 @@ export default function ContactPage() {
     setForm,
     submit
   } = useContact();
+  const [consent, setConsent] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -20,6 +23,7 @@ export default function ContactPage() {
 
   function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (!consent) return;
     submit();
   }
 
@@ -28,7 +32,7 @@ export default function ContactPage() {
       <div className="section-inner">
         <div className={styles.header}>
           <div className="section-label">Contact</div>
-          <h2 className="section-h2">Get In Touch</h2>
+          <h2 id="contact" className="section-h2">Get In Touch</h2>
           <p className="section-sub">
             Ready to start your transformation? Fill out your details and a coach will reach out within 24 hours.
           </p>
@@ -92,7 +96,21 @@ export default function ContactPage() {
             </div>
           </div>
 
-          <button type="submit" className="btn-gold">
+          <label className={styles.consent}>
+            <input
+              type="checkbox"
+              checked={consent}
+              onChange={(e) => setConsent(e.target.checked)}
+              required
+            />
+            <span>
+              I agree to the <Link href="/privacy">Privacy Policy</Link> and consent to APEX
+              storing my information to respond to this inquiry. See how we handle{' '}
+              <Link href="/privacy#consent-for-health-information">health information</Link>.
+            </span>
+          </label>
+
+          <button type="submit" className="btn-gold" disabled={!consent}>
             Submit
           </button>
         </form>

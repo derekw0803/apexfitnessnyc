@@ -40,6 +40,7 @@ export default function TrainingPage() {
         <div className="section-inner">
           <div className="section-label">The Program</div>
           <h1
+            id="hero"
             style={{
               fontFamily: "'Bebas Neue', sans-serif",
               fontSize: 'clamp(3.5rem, 7vw, 6.5rem)',
@@ -83,7 +84,7 @@ export default function TrainingPage() {
       <section className="section" style={{ background: 'var(--charcoal)' }}>
         <div className="section-inner">
           <div className="section-label">The System</div>
-          <h2 className="section-h2">Three Phases. One Protocol.</h2>
+          <h2 id="three-phases" className="section-h2">Three Phases. One Protocol.</h2>
           <p className="section-sub" style={{ marginBottom: '3rem' }}>
             Each phase builds directly on the last. There is no skipping ahead and no wasted weeks.
           </p>
@@ -196,7 +197,7 @@ export default function TrainingPage() {
           <div className="section-label" style={{ justifyContent: 'center' }}>
             Ready?
           </div>
-          <h2 className="section-h2" style={{ marginBottom: '1.5rem' }}>
+          <h2 id="cta" className="section-h2" style={{ marginBottom: '1.5rem' }}>
             The Next 90 Days Are Yours.
           </h2>
           <p
@@ -209,7 +210,7 @@ export default function TrainingPage() {
             <a className="btn-gold" href="/pricing">
               Choose Your Protocol →
             </a>
-            <a className="btn-outline" href="/">
+            <a className="btn-outline" href="/#why-40-is-different">
               See The Method
             </a>
           </div>

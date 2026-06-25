@@ -3,7 +3,7 @@ export default function DashboardPage() {
     <div className="section" style={{ minHeight: 'calc(100vh - 72px)' }}>
       <div className="section-inner" style={{ maxWidth: 800 }}>
         <div className="section-label">Members</div>
-        <h2 className="section-h2">Member Portal</h2>
+        <h2 id="dashboard" className="section-h2">Member Portal</h2>
         <p className="section-sub">
           The member dashboard — nutrition tracking, workout logs, and progress metrics —
           is coming soon.
