@@ -1,17 +1,28 @@
 # dependencies
 node_modules/
 
+# Next.js build output
+.next/
+out/
+
+# Production
+build/
+dist/
+
+# Testing
+coverage/
+
 # Environment variables
 .env
 .env.*
 !.env.example
 
+# Vercel
+.vercel
+
 # TypeScript
 *.tsbuildinfo
 next-env.d.ts
-
-.next
-dist
 
 # Misc
 .DS_Store
