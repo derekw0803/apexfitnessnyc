@@ -67,7 +67,7 @@ export default function TrainingPage() {
           >
             The APEX training system is a 3-month, phase-based protocol engineered around male
             aging physiology. Every session accounts for your hormones, joint health, and recovery
-            capacity — not an athlete half your age.
+            capacity. It's built for your body, not an athlete half your age.
           </p>
           <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
             <a className="btn-gold" href="/pricing">

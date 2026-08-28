@@ -11,8 +11,8 @@ export default function Footer() {
             APE<span style={{ color: 'var(--cream)' }}>X</span>
           </Link>
           <p style={{ color: 'var(--muted)', fontSize: '0.85rem', lineHeight: 1.6, marginTop: '1rem' }}>
-            The exclusive NYC fitness system engineered specifically for men 40+.
-            Precision training, hormone optimization, guaranteed results.
+            In-person coaching in New York City, online coaching nationwide.
+            Built for men 40 and up.
           </p>
         </div>
 
@@ -60,6 +60,7 @@ export default function Footer() {
         <div className={styles.footerBottomLinks}>
           <Link href="/contact">Contact</Link>
           <Link href="/pricing">Get Started</Link>
+          <Link href="/terms">Terms of Service</Link>
           <Link href="/privacy">Privacy Policy</Link>
         </div>
       </div>

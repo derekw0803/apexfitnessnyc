@@ -13,10 +13,10 @@ const barlowCondensed = Barlow_Condensed({
 });
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
-const SITE_URL = 'https://apexfitnessnyc.vercel.app';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://apexfitness.fit';
 const SITE_TITLE = 'ApexFitnessNYC | Personal Training for Men 40+ in NYC';
 const SITE_DESCRIPTION =
-  'Next-generation health optimization for men 40+. Precision personal training, hormone-optimized nutrition, and a 90-day transformation system — in-person in New York City or online coaching nationwide.';
+  'Precision personal training, hormone-optimized nutrition, and a 90-day transformation system for men 40+, in-person in New York City or online coaching nationwide.';
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),

@@ -62,6 +62,10 @@ export default function PrivacyPage() {
           <ul style={listStyle}>
             <li>Service providers who host our infrastructure and database (currently Supabase) and our
               website (currently Vercel), strictly to operate the Service on our behalf</li>
+            <li>Our payment processor (currently Stripe), which collects and processes your payment
+              details directly. APEX never receives or stores your full card number. Stripe handles
+              that information under its own privacy policy, available at{' '}
+              <a href="https://stripe.com/privacy" target="_blank" rel="noopener noreferrer">stripe.com/privacy</a></li>
             <li>Law enforcement or regulators when required by valid legal process</li>
             <li>A successor entity in the event of a merger, acquisition, or sale of assets, subject to
               the same protections described in this policy</li>

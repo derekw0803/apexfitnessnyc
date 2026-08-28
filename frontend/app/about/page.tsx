@@ -5,12 +5,12 @@ const CREDENTIALS = [
   {
     num: '01',
     title: 'Certified Strength & Conditioning Specialist (CSCS)',
-    body: 'The gold standard in performance coaching — earned through rigorous study of biomechanics, exercise physiology, and periodization science. Applied specifically to the hormonal and musculoskeletal realities of men 40+.',
+    body: 'The gold standard in performance coaching. Earned through rigorous study of biomechanics, exercise physiology, and periodization science, and applied specifically to the hormonal and musculoskeletal realities of men 40+.',
   },
   {
     num: '02',
     title: 'Precision Nutrition Certified Coach',
-    body: 'Trained in the science of hormone-optimized eating for the aging male. Carb timing, leucine thresholds, and anti-inflammatory protocols are core tools — not buzzwords.',
+    body: 'Trained in the science of hormone-optimized eating for the aging male. Carb timing, leucine thresholds, and anti-inflammatory protocols are core tools, not buzzwords.',
   },
   {
     num: '03',
@@ -28,17 +28,17 @@ const PHILOSOPHY = [
   {
     icon: '⚡',
     title: 'Precision Over Volume',
-    body: 'More is not better. The right stimulus, at the right time, with the right recovery — that is the equation. Every APEX session is engineered for maximum hormonal return with zero wasted effort.',
+    body: 'More is not better. The right stimulus, at the right time, with the right recovery: that is the equation. Every APEX session is engineered for maximum hormonal return with zero wasted effort.',
   },
   {
     icon: '🧬',
     title: 'Biology-First Programming',
-    body: 'Your physiology at 55 is not a limitation. It is a specification sheet. APEX is written to that spec — not adapted from a program designed for a 22-year-old who can recover overnight.',
+    body: 'Your physiology at 55 is not a limitation. It is a specification sheet. APEX is written to that spec. It is not adapted from a program designed for a 22-year-old who can recover overnight.',
   },
   {
     icon: '📊',
     title: 'Data Drives Decisions',
-    body: 'Subjective feel is not a protocol. APEX tracks body composition, strength output, and recovery markers — then the Agentic Engine synthesizes that data into your next optimized training block.',
+    body: 'Subjective feel is not a protocol. APEX tracks body composition, strength output, and recovery markers. The Agentic Engine then synthesizes that data into your next optimized training block.',
   },
   {
     icon: '🛡️',
@@ -76,7 +76,7 @@ export default function AboutPage() {
               BUILT THIS<br />FOR YOU.<br /><span style={{ color: 'var(--gold)' }}>BECAUSE</span><br />I LIVED IT.
             </h1>
             <p style={{ color: 'var(--muted)', fontSize: '1rem', lineHeight: 1.8, maxWidth: 480, marginBottom: '2.5rem' }}>
-              I spent years watching the fitness industry ignore the men who needed it most — the 50-year-old banker with bad knees, the 62-year-old executive who hadn&apos;t trained in a decade, the 48-year-old who kept getting hurt following programs designed for someone half his age. I built APEX to fix that — with science, precision, and a system that actually respects your biology.
+              I spent years watching the fitness industry ignore the men who needed it most: the 50-year-old banker with bad knees, the 62-year-old executive who hadn&apos;t trained in a decade, the 48-year-old who kept getting hurt following programs designed for someone half his age. I built APEX to fix that. Real science, real precision, a system that actually respects your biology.
             </p>
             <a className="btn-gold" href="/pricing">Start Your Protocol →</a>
           </div>
@@ -100,32 +100,6 @@ export default function AboutPage() {
           </div>
         </div>
       </section>
-
-      {/* ── My Story ───────────────────────────────── */}
-      {/* <section className="section" style={{ background: 'var(--charcoal)' }}>
-        <div className="section-inner" style={{ maxWidth: 900 }}>
-          <div className="section-label">The Story</div>
-          <h2 className="section-h2">Why I Built APEX.</h2>ff
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4rem', marginTop: '3rem' }}>
-            <div style={{ color: 'var(--muted)', lineHeight: 1.9, fontSize: '0.97rem' }}>
-              <p style={{ marginBottom: '1.5rem' }}>
-                At 28, I was a certified trainer working in commercial gyms. I was good at helping young athletes get bigger and faster. But I kept running into a different client — the 55-year-old man whose doctor had just told him to &ldquo;get more active&rdquo; without any real guidance. Men who were motivated, intelligent, and completely failed by the fitness industry.
-              </p>
-              <p>
-                I went deep. I spent years studying the endocrinology of male aging — testosterone, cortisol, insulin sensitivity, mTOR signaling, inflammaging. I started to see that what these men needed wasn&apos;t a modified version of a general program. They needed an entirely different system — one written for their biology from the ground up.
-              </p>
-            </div>
-            <div style={{ color: 'var(--muted)', lineHeight: 1.9, fontSize: '0.97rem' }}>
-              <p style={{ marginBottom: '1.5rem' }}>
-                I built the first version of APEX for a handful of clients in NYC. The results were striking. Men who&apos;d been stuck for years started dropping fat, building real muscle, and reporting that they felt 15 years younger within the first month. Word spread fast.
-              </p>
-              <p>
-                Today, APEX is the only New York City fitness system designed exclusively for men 45–70. It is not a gym. It is not an app. It is a precision protocol — now powered by an Agentic AI engine that analyzes your performance data and synthesizes your next optimized training block automatically. The science is real. The results are guaranteed.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section> */}
 
       {/* ── Credentials ────────────────────────────── */}
       <section className="section">

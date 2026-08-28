@@ -1,0 +1,1829 @@
+diff --git a/backend/supabase/migrations/20260817000000_create_orders.sql b/backend/supabase/migrations/20260817000000_create_orders.sql
+new file mode 100644
+index 0000000..4cc4636
+--- /dev/null
++++ b/backend/supabase/migrations/20260817000000_create_orders.sql
+@@ -0,0 +1,31 @@
++-- Orders recorded from verified Stripe webhook events.
++--
++-- Written only by the server (service_role). Row Level Security is enabled with
++-- no policies for anon/authenticated, so this table is unreadable from the
++-- browser even with the anon key — same posture as public.contacts.
++
++create table if not exists public.orders (
++  id uuid primary key default gen_random_uuid(),
++  stripe_session_id text not null unique,
++  stripe_payment_intent text,
++  plan_id text,
++  plan_name text,
++  requires_booking boolean not null default false,
++  amount_total integer not null default 0,
++  currency text not null default 'usd',
++  customer_email text,
++  customer_name text,
++  customer_phone text,
++  status text not null default 'paid',
++  created_at timestamptz not null default now()
++);
++
++create index if not exists orders_customer_email_idx on public.orders (customer_email);
++create index if not exists orders_payment_intent_idx on public.orders (stripe_payment_intent);
++create index if not exists orders_created_at_idx on public.orders (created_at desc);
++
++alter table public.orders enable row level security;
++
++-- No policies for anon/authenticated => all access denied by default.
++-- service_role bypasses RLS and is used exclusively by the server.
++grant all on public.orders to service_role;
+diff --git a/frontend/.env.example b/frontend/.env.example
+new file mode 100644
+index 0000000..e18492b
+--- /dev/null
++++ b/frontend/.env.example
+@@ -0,0 +1,34 @@
++# ---------------------------------------------------------------------------
++# APEX frontend environment variables
++#
++# Copy to .env.local for local development. In production, set these in
++# Vercel -> Project Settings -> Environment Variables.
++#
++# NEVER commit real values. NEVER prefix a secret with NEXT_PUBLIC_ — that
++# prefix ships the value to the browser in plain text.
++# ---------------------------------------------------------------------------
++
++# --- Site ---
++# Canonical public URL. Used to build Stripe success/cancel redirect URLs.
++NEXT_PUBLIC_SITE_URL=https://apexfitness.fit
++
++# --- Stripe ---
++# Secret key. Server-only. Starts sk_test_ in test mode, sk_live_ when live.
++STRIPE_SECRET_KEY=sk_test_replace_me
++
++# Webhook signing secret from Stripe -> Developers -> Webhooks.
++# Starts whsec_. Each endpoint (local CLI vs production) has its own value.
++STRIPE_WEBHOOK_SECRET=whsec_replace_me
++
++# --- Supabase ---
++# Project URL, e.g. https://xxxxxxxx.supabase.co
++SUPABASE_URL=https://replace_me.supabase.co
++
++# Service-role key. Server-only. Bypasses Row Level Security — treat it like a
++# database password. Found in Supabase -> Project Settings -> API.
++SUPABASE_SERVICE_ROLE_KEY=replace_me
++
++# --- Booking (optional) ---
++# Scheduling link shown after purchase for 1-on-1 coaching and nutrition plans.
++# e.g. a Cal.com or Calendly URL. Leave unset to show generic copy instead.
++NEXT_PUBLIC_BOOKING_URL=
+diff --git a/frontend/app/api/checkout/route.ts b/frontend/app/api/checkout/route.ts
+new file mode 100644
+index 0000000..422fd84
+--- /dev/null
++++ b/frontend/app/api/checkout/route.ts
+@@ -0,0 +1,77 @@
++import { NextRequest, NextResponse } from 'next/server';
++import { getPlan } from '@/lib/plans';
++import { getStripe, getBaseUrl } from '@/lib/stripe';
++
++export const runtime = 'nodejs';
++export const dynamic = 'force-dynamic';
++
++/**
++ * Creates a Stripe Checkout Session and returns its hosted URL.
++ *
++ * The browser sends only a plan id. The price is resolved server-side from the
++ * canonical catalogue in lib/plans.ts, so a tampered request cannot change the
++ * amount charged.
++ *
++ * Card details are collected by Stripe on Stripe's own domain. We never see,
++ * transmit, or store a card number — which is what keeps this out of PCI scope.
++ */
++export async function POST(request: NextRequest) {
++  let body: Record<string, unknown>;
++
++  try {
++    body = await request.json();
++  } catch {
++    return NextResponse.json({ error: 'Invalid request body.' }, { status: 400 });
++  }
++
++  const planId = typeof body.planId === 'string' ? body.planId : '';
++  const plan = getPlan(planId);
++
++  if (!plan) {
++    return NextResponse.json({ error: 'Unknown plan selected.' }, { status: 400 });
++  }
++
++  try {
++    const stripe = getStripe();
++    const baseUrl = getBaseUrl();
++
++    const session = await stripe.checkout.sessions.create({
++      mode: 'payment',
++      line_items: [
++        {
++          quantity: 1,
++          price_data: {
++            currency: 'usd',
++            unit_amount: plan.amount,
++            product_data: {
++              name: plan.name,
++              description: plan.desc,
++            },
++          },
++        },
++      ],
++      // Stripe collects the email; we use it to fulfil and to contact the client.
++      billing_address_collection: 'auto',
++      phone_number_collection: { enabled: true },
++      success_url: `${baseUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
++      cancel_url: `${baseUrl}/pricing?checkout=cancelled`,
++      metadata: {
++        plan_id: plan.id,
++        plan_name: plan.name,
++        requires_booking: plan.requiresBooking ? 'true' : 'false',
++      },
++    });
++
++    if (!session.url) {
++      throw new Error('Stripe did not return a checkout URL.');
++    }
++
++    return NextResponse.json({ url: session.url });
++  } catch (err) {
++    console.error('[checkout] session creation failed:', err);
++    return NextResponse.json(
++      { error: 'We could not start checkout. Please try again or contact us.' },
++      { status: 500 }
++    );
++  }
++}
+diff --git a/frontend/app/api/contact/route.ts b/frontend/app/api/contact/route.ts
+new file mode 100644
+index 0000000..ed010bf
+--- /dev/null
++++ b/frontend/app/api/contact/route.ts
+@@ -0,0 +1,84 @@
++import { NextRequest, NextResponse } from 'next/server';
++import { getDb } from '@/lib/supabaseAdmin';
++
++export const runtime = 'nodejs';
++// Never cache a form submission endpoint.
++export const dynamic = 'force-dynamic';
++
++const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
++
++function clean(value: unknown, max: number): string {
++  if (typeof value !== 'string') return '';
++  return value.trim().slice(0, max);
++}
++
++/**
++ * Lead capture. Replaces the old standalone Express backend, which could not
++ * run on Vercel (it only called listen() outside production and exported no
++ * serverless handler) — so every submission from the live site was failing
++ * against the visitor's own localhost.
++ *
++ * Note there is deliberately no GET here. The previous Express router exposed
++ * GET /all, which returned every lead's name, email and phone with no
++ * authentication at all.
++ */
++export async function POST(request: NextRequest) {
++  let body: Record<string, unknown>;
++
++  try {
++    body = await request.json();
++  } catch {
++    return NextResponse.json(
++      { success: false, error: 'Invalid request body.' },
++      { status: 400 }
++    );
++  }
++
++  // Honeypot: real users never fill a hidden field. Bots usually do.
++  // Return 200 so the bot believes it succeeded and does not retry.
++  if (clean(body.company, 100)) {
++    return NextResponse.json({ success: true });
++  }
++
++  const firstName = clean(body.firstName, 100);
++  const lastName = clean(body.lastName, 100);
++  const email = clean(body.email, 255).toLowerCase();
++  const phone = clean(body.phone, 40);
++
++  const fieldErrors: Record<string, string> = {};
++  if (!firstName) fieldErrors.firstName = 'First name is required.';
++  if (!lastName) fieldErrors.lastName = 'Last name is required.';
++  if (!email) fieldErrors.email = 'Email is required.';
++  else if (!EMAIL_RE.test(email)) fieldErrors.email = 'Enter a valid email address.';
++
++  if (Object.keys(fieldErrors).length > 0) {
++    return NextResponse.json(
++      { success: false, error: 'Please check the highlighted fields.', fieldErrors },
++      { status: 400 }
++    );
++  }
++
++  try {
++    const { error } = await getDb().from('contacts').insert({
++      first_name: firstName,
++      last_name: lastName,
++      phone: phone || null,
++      email,
++    });
++
++    if (error) throw error;
++
++    return NextResponse.json({ success: true });
++  } catch (err) {
++    // Log server-side for debugging, but never leak internals to the client.
++    console.error('[contact] insert failed:', err);
++    return NextResponse.json(
++      {
++        success: false,
++        error:
++          'Something went wrong on our end. Please email us directly and we will get right back to you.',
++      },
++      { status: 500 }
++    );
++  }
++}
+diff --git a/frontend/app/api/stripe/webhook/route.ts b/frontend/app/api/stripe/webhook/route.ts
+new file mode 100644
+index 0000000..81bc6d7
+--- /dev/null
++++ b/frontend/app/api/stripe/webhook/route.ts
+@@ -0,0 +1,102 @@
++import { NextRequest, NextResponse } from 'next/server';
++import type Stripe from 'stripe';
++import { getStripe } from '@/lib/stripe';
++import { getDb } from '@/lib/supabaseAdmin';
++
++export const runtime = 'nodejs';
++export const dynamic = 'force-dynamic';
++
++/**
++ * Stripe webhook receiver.
++ *
++ * This is the ONLY trustworthy signal that a payment succeeded. The browser
++ * being redirected to /checkout/success proves nothing — anyone can visit that
++ * URL directly. Fulfilment must hang off this endpoint.
++ *
++ * We read the raw request body with request.text(); parsing it first would
++ * break signature verification.
++ */
++export async function POST(request: NextRequest) {
++  const secret = process.env.STRIPE_WEBHOOK_SECRET;
++  if (!secret) {
++    console.error('[webhook] STRIPE_WEBHOOK_SECRET is not set.');
++    return NextResponse.json({ error: 'Webhook not configured.' }, { status: 500 });
++  }
++
++  const signature = request.headers.get('stripe-signature');
++  if (!signature) {
++    return NextResponse.json({ error: 'Missing stripe-signature header.' }, { status: 400 });
++  }
++
++  const rawBody = await request.text();
++
++  let event: Stripe.Event;
++  try {
++    event = getStripe().webhooks.constructEvent(rawBody, signature, secret);
++  } catch (err) {
++    // A failure here means the request was not signed by Stripe. Reject it.
++    console.error('[webhook] signature verification failed:', err);
++    return NextResponse.json({ error: 'Invalid signature.' }, { status: 400 });
++  }
++
++  try {
++    switch (event.type) {
++      case 'checkout.session.completed': {
++        const session = event.data.object as Stripe.Checkout.Session;
++
++        // Only fulfil once payment actually cleared.
++        if (session.payment_status !== 'paid') break;
++
++        const { error } = await getDb()
++          .from('orders')
++          .upsert(
++            {
++              stripe_session_id: session.id,
++              stripe_payment_intent: (session.payment_intent as string) ?? null,
++              plan_id: session.metadata?.plan_id ?? null,
++              plan_name: session.metadata?.plan_name ?? null,
++              requires_booking: session.metadata?.requires_booking === 'true',
++              amount_total: session.amount_total ?? 0,
++              currency: session.currency ?? 'usd',
++              customer_email:
++                session.customer_details?.email ?? session.customer_email ?? null,
++              customer_name: session.customer_details?.name ?? null,
++              customer_phone: session.customer_details?.phone ?? null,
++              status: 'paid',
++            },
++            // Stripe can deliver the same event more than once. Upserting on the
++            // session id makes replays harmless.
++            { onConflict: 'stripe_session_id' }
++          );
++
++        if (error) throw error;
++        console.log('[webhook] recorded order for session', session.id);
++        break;
++      }
++
++      case 'charge.refunded': {
++        const charge = event.data.object as Stripe.Charge;
++        const paymentIntent = charge.payment_intent as string | null;
++        if (!paymentIntent) break;
++
++        const { error } = await getDb()
++          .from('orders')
++          .update({ status: 'refunded' })
++          .eq('stripe_payment_intent', paymentIntent);
++
++        if (error) throw error;
++        break;
++      }
++
++      default:
++        // Unhandled event types are fine — acknowledge so Stripe stops retrying.
++        break;
++    }
++
++    return NextResponse.json({ received: true });
++  } catch (err) {
++    // Return 500 so Stripe retries; the event was genuine, our handling failed.
++    console.error('[webhook] handler failed for', event.type, err);
++    return NextResponse.json({ error: 'Handler failed.' }, { status: 500 });
++  }
++}
+diff --git a/frontend/app/checkout/cancelled/page.tsx b/frontend/app/checkout/cancelled/page.tsx
+new file mode 100644
+index 0000000..042f355
+--- /dev/null
++++ b/frontend/app/checkout/cancelled/page.tsx
+@@ -0,0 +1,27 @@
++import Link from 'next/link';
++
++export const metadata = {
++  title: 'Checkout Cancelled | APEX',
++  robots: { index: false, follow: false },
++};
++
++export default function CheckoutCancelledPage() {
++  return (
++    <div className="section" style={{ minHeight: 'calc(100vh - 72px)' }}>
++      <div className="section-inner" style={{ maxWidth: 640, textAlign: 'center' }}>
++        <div className="section-label" style={{ justifyContent: 'center' }}>Cancelled</div>
++        <h2 className="section-h2" style={{ margin: '0.5rem 0 1.5rem' }}>No Charge Was Made</h2>
++        <p className="section-sub" style={{ marginBottom: '2.5rem' }}>
++          You cancelled before completing payment, so nothing was charged. Your card was never
++          billed and no account was created.
++        </p>
++        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
++          <Link href="/pricing" className="btn-gold">Back to Pricing</Link>
++          <Link href="/contact" style={{ color: 'var(--gold)', alignSelf: 'center' }}>
++            Talk to a coach first
++          </Link>
++        </div>
++      </div>
++    </div>
++  );
++}
+diff --git a/frontend/app/checkout/success/page.tsx b/frontend/app/checkout/success/page.tsx
+new file mode 100644
+index 0000000..ca6d095
+--- /dev/null
++++ b/frontend/app/checkout/success/page.tsx
+@@ -0,0 +1,126 @@
++import Link from 'next/link';
++import { getStripe } from '@/lib/stripe';
++
++export const dynamic = 'force-dynamic';
++
++export const metadata = {
++  title: 'Payment Confirmed | APEX',
++  robots: { index: false, follow: false },
++};
++
++/**
++ * Post-checkout confirmation.
++ *
++ * We re-fetch the session from Stripe rather than trusting query params, so
++ * this page cannot be spoofed by visiting the URL with a made-up session id.
++ * Fulfilment itself still happens in the webhook — this page is only display.
++ */
++export default async function CheckoutSuccessPage({
++  searchParams,
++}: {
++  searchParams: Promise<{ session_id?: string }>;
++}) {
++  const { session_id: sessionId } = await searchParams;
++
++  let paid = false;
++  let planName = '';
++  let email = '';
++  let amount = '';
++  let requiresBooking = false;
++
++  if (sessionId) {
++    try {
++      const session = await getStripe().checkout.sessions.retrieve(sessionId);
++      paid = session.payment_status === 'paid';
++      planName = session.metadata?.plan_name ?? '';
++      requiresBooking = session.metadata?.requires_booking === 'true';
++      email = session.customer_details?.email ?? '';
++      if (session.amount_total != null) {
++        amount = (session.amount_total / 100).toLocaleString('en-US', {
++          style: 'currency',
++          currency: (session.currency ?? 'usd').toUpperCase(),
++        });
++      }
++    } catch {
++      paid = false;
++    }
++  }
++
++  const bookingUrl = process.env.NEXT_PUBLIC_BOOKING_URL;
++
++  return (
++    <div className="section" style={{ minHeight: 'calc(100vh - 72px)' }}>
++      <div className="section-inner" style={{ maxWidth: 720, textAlign: 'center' }}>
++        {paid ? (
++          <>
++            <div className="section-label" style={{ justifyContent: 'center' }}>Confirmed</div>
++            <h2 className="section-h2" style={{ margin: '0.5rem 0 1.5rem' }}>You&apos;re In</h2>
++
++            <p className="section-sub" style={{ marginBottom: '2.5rem' }}>
++              Payment received{amount && ` — ${amount}`}
++              {planName && ` for the ${planName}`}.
++              {email && (
++                <>
++                  {' '}A receipt is on its way to <strong style={{ color: 'var(--cream)' }}>{email}</strong>.
++                </>
++              )}
++            </p>
++
++            <div style={{
++              background: 'var(--charcoal)', border: '1px solid var(--border)',
++              padding: '2.5rem', textAlign: 'left',
++            }}>
++              <h3 style={{
++                fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: '0.15em',
++                textTransform: 'uppercase', color: 'var(--gold)', fontSize: '0.9rem',
++                marginBottom: '1.5rem',
++              }}>
++                What happens next
++              </h3>
++
++              <ol style={{ color: 'var(--cream)', fontSize: '0.95rem', lineHeight: 2, paddingLeft: '1.2rem' }}>
++                <li>You&apos;ll get a payment receipt from Stripe by email.</li>
++                <li>
++                  A coach will contact you within 24 hours to collect your intake details and
++                  starting metrics.
++                </li>
++                {requiresBooking && (
++                  <li>
++                    {bookingUrl ? (
++                      <>
++                        Book your first session here:{' '}
++                        <a href={bookingUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--gold)' }}>
++                          choose a time
++                        </a>
++                        .
++                      </>
++                    ) : (
++                      <>We&apos;ll send you a scheduling link to book your first session.</>
++                    )}
++                  </li>
++                )}
++                <li>Your program materials are delivered once intake is complete.</li>
++              </ol>
++            </div>
++
++            <p style={{ marginTop: '2rem', color: 'var(--muted)', fontSize: '0.85rem', lineHeight: 1.7 }}>
++              Questions before then? <Link href="/contact" style={{ color: 'var(--gold)' }}>Get in touch</Link>.
++              See our <Link href="/refund-policy" style={{ color: 'var(--gold)' }}>refund policy</Link>.
++            </p>
++          </>
++        ) : (
++          <>
++            <div className="section-label" style={{ justifyContent: 'center' }}>Pending</div>
++            <h2 className="section-h2" style={{ margin: '0.5rem 0 1.5rem' }}>We couldn&apos;t confirm this payment</h2>
++            <p className="section-sub" style={{ marginBottom: '2rem' }}>
++              If you just paid, your bank may still be processing it and your receipt will arrive
++              shortly. If you were charged and don&apos;t hear from us within an hour, contact us and
++              we&apos;ll sort it out straight away.
++            </p>
++            <Link href="/contact" className="btn-gold">Contact Us</Link>
++          </>
++        )}
++      </div>
++    </div>
++  );
++}
+diff --git a/frontend/app/contact/contact.tsx b/frontend/app/contact/contact.tsx
+index eda096c..a12e4d9 100644
+--- a/frontend/app/contact/contact.tsx
++++ b/frontend/app/contact/contact.tsx
+@@ -5,11 +5,22 @@ import Link from 'next/link';
+ import styles from './contact.module.css';
+ import useContact from './useContact';
+ 
++function FieldError({ text }: { text: string }) {
++  return (
++    <span style={{ color: '#f87171', fontSize: '0.8rem', marginTop: '0.4rem', display: 'block' }}>
++      {text}
++    </span>
++  );
++}
++
+ export default function ContactPage() {
+   const {
+     form,
+     setForm,
+-    submit
++    submit,
++    status,
++    message,
++    fieldErrors
+   } = useContact();
+   const [consent, setConsent] = useState(false);
+ 
+@@ -50,8 +61,10 @@ export default function ContactPage() {
+                 value={form.firstName}
+                 onChange={handleChange}
+                 className={styles.input}
++                aria-invalid={!!fieldErrors.firstName}
+                 required
+               />
++              {fieldErrors.firstName && <FieldError text={fieldErrors.firstName} />}
+             </div>
+             <div className={styles.field}>
+               <label className={styles.label} htmlFor="lastName">Last Name</label>
+@@ -63,8 +76,10 @@ export default function ContactPage() {
+                 value={form.lastName}
+                 onChange={handleChange}
+                 className={styles.input}
++                aria-invalid={!!fieldErrors.lastName}
+                 required
+               />
++              {fieldErrors.lastName && <FieldError text={fieldErrors.lastName} />}
+             </div>
+           </div>
+ 
+@@ -91,8 +106,10 @@ export default function ContactPage() {
+                 value={form.email}
+                 onChange={handleChange}
+                 className={styles.input}
++                aria-invalid={!!fieldErrors.email}
+                 required
+               />
++              {fieldErrors.email && <FieldError text={fieldErrors.email} />}
+             </div>
+           </div>
+ 
+@@ -110,9 +127,42 @@ export default function ContactPage() {
+             </span>
+           </label>
+ 
+-          <button type="submit" className="btn-gold" disabled={!consent}>
+-            Submit
++          {/* Honeypot: hidden from humans and screen readers, tempting to bots. */}
++          <input
++            type="text"
++            name="company"
++            value={form.company}
++            onChange={handleChange}
++            tabIndex={-1}
++            autoComplete="off"
++            aria-hidden="true"
++            style={{
++              position: 'absolute',
++              left: '-9999px',
++              width: 1,
++              height: 1,
++              opacity: 0,
++            }}
++          />
++
++          <button type="submit" className="btn-gold" disabled={!consent || status === 'submitting'}>
++            {status === 'submitting' ? 'Sending…' : 'Submit'}
+           </button>
++
++          {message && (
++            <p
++              role="status"
++              aria-live="polite"
++              style={{
++                marginTop: '1rem',
++                fontSize: '0.9rem',
++                lineHeight: 1.6,
++                color: status === 'success' ? '#4ade80' : '#f87171',
++              }}
++            >
++              {message}
++            </p>
++          )}
+         </form>
+       </div>
+     </div>
+diff --git a/frontend/app/contact/useContact.ts b/frontend/app/contact/useContact.ts
+index 50cc3d7..b7e595e 100644
+--- a/frontend/app/contact/useContact.ts
++++ b/frontend/app/contact/useContact.ts
+@@ -5,51 +5,76 @@ type Form = {
+   lastName: string;
+   phone: string;
+   email: string;
++  /** Honeypot. Hidden from real users; bots fill it in. */
++  company: string;
++};
++
++export type SubmitStatus = 'idle' | 'submitting' | 'success' | 'error';
++
++const EMPTY: Form = {
++  firstName: '',
++  lastName: '',
++  phone: '',
++  email: '',
++  company: '',
+ };
+ 
+ const useContact = () => {
+-  const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:8081';
+-
+-  const [form, setForm] = useState<Form>({
+-    firstName: '',
+-    lastName: '',
+-    phone: '',
+-    email: ''
+-  });
+-
+-  const validate = (): boolean => {
+-    if (!form.firstName || !form.lastName || !form.email) {
+-      console.error("Missing required fields");
+-      return false;
+-    }
+-    return true;
+-  };
++  const [form, setForm] = useState<Form>(EMPTY);
++  const [status, setStatus] = useState<SubmitStatus>('idle');
++  const [message, setMessage] = useState<string>('');
++  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+ 
+   const submit = async () => {
+-    if (!validate()) return;
++    setFieldErrors({});
++    setMessage('');
+ 
+-    try {
+-      console.log("Sending message:", form);
++    // Client-side check for instant feedback; the server validates again.
++    const errors: Record<string, string> = {};
++    if (!form.firstName.trim()) errors.firstName = 'First name is required.';
++    if (!form.lastName.trim()) errors.lastName = 'Last name is required.';
++    if (!form.email.trim()) errors.email = 'Email is required.';
++    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
++      errors.email = 'Enter a valid email address.';
++    }
++
++    if (Object.keys(errors).length > 0) {
++      setFieldErrors(errors);
++      setStatus('error');
++      setMessage('Please check the highlighted fields.');
++      return;
++    }
+ 
+-      const response = await fetch(`${BASE_URL}/api/v1/contact`, {
++    setStatus('submitting');
++
++    try {
++      // Same-origin call: the API now ships with the site, so there is no
++      // cross-origin base URL to configure and nothing pointing at localhost.
++      const response = await fetch('/api/contact', {
+         method: 'POST',
+         headers: { 'Content-Type': 'application/json' },
+         body: JSON.stringify(form),
+       });
+ 
+-      if (response.ok) {
+-        console.log("Message successfully sent");
+-        setForm({ firstName: '', lastName: '', phone: '', email: '' });
++      const data = await response.json().catch(() => ({}));
++
++      if (response.ok && data.success) {
++        setForm(EMPTY);
++        setStatus('success');
++        setMessage("Thanks — we've got your details. A coach will reach out within 24 hours.");
+         return;
+       }
+ 
+-      console.error("Server responded with an error:", response.status);
+-    } catch (e) {
+-      console.error("Network error during submission:", e);
++      if (data.fieldErrors) setFieldErrors(data.fieldErrors);
++      setStatus('error');
++      setMessage(data.error || 'Something went wrong. Please try again.');
++    } catch {
++      setStatus('error');
++      setMessage('We could not reach the server. Check your connection and try again.');
+     }
+   };
+ 
+-  return { form, setForm, submit };
++  return { form, setForm, submit, status, message, fieldErrors };
+ };
+ 
+ export default useContact;
+diff --git a/frontend/app/layout.tsx b/frontend/app/layout.tsx
+index 08aa794..6895465 100644
+--- a/frontend/app/layout.tsx
++++ b/frontend/app/layout.tsx
+@@ -13,7 +13,7 @@ const barlowCondensed = Barlow_Condensed({
+ });
+ const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
+ 
+-const SITE_URL = 'https://apexfitnessnyc.vercel.app';
++const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://apexfitness.fit';
+ const SITE_TITLE = 'ApexFitnessNYC | Personal Training for Men 40+ in NYC';
+ const SITE_DESCRIPTION =
+   'Next-generation health optimization for men 40+. Precision personal training, hormone-optimized nutrition, and a 90-day transformation system — in-person in New York City or online coaching nationwide.';
+diff --git a/frontend/app/pricing/pricing.tsx b/frontend/app/pricing/pricing.tsx
+index 2876145..36961bc 100644
+--- a/frontend/app/pricing/pricing.tsx
++++ b/frontend/app/pricing/pricing.tsx
+@@ -1,49 +1,54 @@
+ 'use client';
+-import { useState } from 'react';
+-
+-const PLANS = [
+-  {
+-    name: '1-Month Program',
+-    price: 300,
+-    desc: 'Full access to the 4-week APEX foundation protocol and nutrition dashboard.',
+-    features: ['Month 1 Training Regiment', 'Macro Tracking Dashboard', 'Weekly Progress Tracking', 'Community Access'],
+-    highlight: false,
+-  },
+-  {
+-    name: '2-Month Program',
+-    price: 450,
+-    desc: 'Access to Month 1 (Foundation) and Month 2 (MetCon) programs.',
+-    features: ['Everything in 1-Month', 'Month 2 MetCon Curriculum' , 'Priority Support'],
+-    highlight: true,
+-    badge: 'Most Popular',
+-  },
+-  {
+-    name: '3-Month Program',
+-    price: 600,
+-    desc: 'The complete 12-week APEX lifecycle, including Longevity and Peak performance.',
+-    features: ['Everything in 2-Month', 'Month 3 Longevity Curriculum', 'Guaranteed 90-Day Results'],
+-    highlight: false,
+-  },
+-  {
+-    name: '1-on-1 Coaching',
+-    price: 200,
+-    desc: 'Personalized coaching sessions tailored to your individual needs and goals.',
+-    features: ['1 hour one-on-one coaching', 'Customized workout plans', 'Accountability and support'],
+-    highlight: false,
+-  },
+-  {
+-    name: 'Customized nutrition plans',
+-    price: 500,
+-    desc: 'Personalized nutrition plans tailored to your individual needs and goals.',
+-    features: ['Included macros', 'Customized meal plans', 'dietary restriction support', 'weekly, monthly check-ins'],
+-    highlight: false,
+-  }
+-];
+-
+ 
++import { useState, useEffect } from 'react';
++import Link from 'next/link';
++import { PLANS, formatDollars } from '@/lib/plans';
+ 
++/**
++ * NOTE: there is deliberately no card-number form on this page.
++ *
++ * Card details are collected by Stripe on Stripe's own hosted checkout page.
++ * We never see or transmit a card number, which keeps this site out of PCI
++ * scope. Do not reintroduce raw card inputs here.
++ */
+ export default function PricingPage() {
+-  const [selected, setSelected] = useState(1);
++  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
++  const [error, setError] = useState<string>('');
++  const [cancelled, setCancelled] = useState(false);
++
++  useEffect(() => {
++    const params = new URLSearchParams(window.location.search);
++    if (params.get('checkout') === 'cancelled') setCancelled(true);
++  }, []);
++
++  const startCheckout = async (planId: string) => {
++    setError('');
++    setCancelled(false);
++    setLoadingPlan(planId);
++
++    try {
++      const res = await fetch('/api/checkout', {
++        method: 'POST',
++        headers: { 'Content-Type': 'application/json' },
++        // Only the plan id goes over the wire. The price is resolved on the
++        // server so it cannot be tampered with.
++        body: JSON.stringify({ planId }),
++      });
++
++      const data = await res.json().catch(() => ({}));
++
++      if (!res.ok || !data.url) {
++        setError(data.error || 'We could not start checkout. Please try again.');
++        setLoadingPlan(null);
++        return;
++      }
++
++      window.location.href = data.url;
++    } catch {
++      setError('We could not reach the payment server. Check your connection and try again.');
++      setLoadingPlan(null);
++    }
++  };
+ 
+   return (
+     <div className="section" style={{ minHeight: 'calc(100vh - 72px)' }}>
+@@ -53,120 +58,134 @@ export default function PricingPage() {
+           <div className="section-label" style={{ justifyContent: 'center' }}>Investment</div>
+           <h2 id="pricing" className="section-h2" style={{ margin: '0.5rem 0' }}>The Price of Greatness</h2>
+           <p className="section-sub" style={{ margin: '0 auto', maxWidth: 600 }}>
+-            Choose the protocol that fits your commitment level. Cancel anytime. No hidden fees,
+-            just guaranteed physical transformation.
++            Choose the protocol that fits your commitment level. One-time payment, no
++            subscription, no hidden fees. Every program is backed by our{' '}
++            <Link href="/refund-policy" style={{ color: 'var(--gold)' }}>refund policy</Link>.
+           </p>
+         </div>
+ 
++        {cancelled && (
++          <p
++            role="status"
++            style={{
++              textAlign: 'center', marginBottom: '2rem', color: 'var(--muted)',
++              fontSize: '0.9rem',
++            }}
++          >
++            Checkout cancelled — nothing was charged. Pick a program below whenever you&apos;re ready.
++          </p>
++        )}
++
++        {error && (
++          <p
++            role="alert"
++            style={{
++              textAlign: 'center', marginBottom: '2rem', color: '#f87171', fontSize: '0.9rem',
++            }}
++          >
++            {error}
++          </p>
++        )}
++
+         {/* Plans */}
+         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem', alignItems: 'stretch' }}>
+-          {PLANS.map((plan, i) => (
+-            <div
+-              key={i}
+-              onClick={() => setSelected(i)}
+-              style={{
+-                background: 'var(--charcoal)',
+-                border: plan.highlight ? '2px solid var(--gold)' : '1px solid var(--border)',
+-                padding: '3rem 2.5rem',
+-                position: 'relative',
+-                display: 'flex',
+-                flexDirection: 'column',
+-                cursor: 'pointer',
+-                transition: 'border-color 0.2s',
+-              }}
+-            >
+-              {plan.badge && (
+-                <div style={{
+-                  position: 'absolute', top: -1, left: '50%', transform: 'translateX(-50%)',
+-                  background: 'var(--gold)', color: 'var(--black)',
+-                  padding: '0.25rem 1.5rem',
+-                  fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700,
+-                  letterSpacing: '0.2em', fontSize: '0.75rem', textTransform: 'uppercase',
+-                }}>
+-                  {plan.badge}
+-                </div>
+-              )}
+-              <h3 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '2.5rem', color: plan.highlight ? 'var(--gold)' : 'var(--cream)', marginBottom: '0.5rem', letterSpacing: '0.05em' }}>
+-                {plan.name}
+-              </h3>
+-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.25rem', marginBottom: '1rem' }}>
+-                <span style={{ fontSize: '1.5rem', color: 'var(--muted)', marginTop: '0.5rem' }}>$</span>
+-                <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '4.5rem', lineHeight: 1, color: 'var(--cream)' }}>{plan.price}</span>
+-              </div>
+-              <p style={{ color: 'rgba(240,235,224,0.6)', fontSize: '0.9rem', lineHeight: 1.6, paddingBottom: '2rem', borderBottom: '1px solid rgba(255,255,255,0.05)', marginBottom: '2rem' }}>
+-                {plan.desc}
+-              </p>
+-              <ul style={{ listStyle: 'none', flex: 1 }}>
+-                {plan.features.map((f, j) => (
+-                  <li key={j} style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem', fontSize: '0.95rem', color: 'var(--cream)' }}>
+-                    <span style={{ color: 'var(--gold)', fontSize: '0.8rem' }}>✓</span>
+-                    {f}
+-                  </li>
+-                ))}
+-              </ul>
+-              {/* <button
++          {PLANS.map((plan) => {
++            const isLoading = loadingPlan === plan.id;
++            const anyLoading = loadingPlan !== null;
++
++            return (
++              <div
++                key={plan.id}
+                 style={{
+-                  marginTop: '3rem', width: '100%', padding: '1.25rem', border: 'none', cursor: 'pointer',
+-                  background: plan.highlight ? 'var(--gold)' : 'rgba(200,168,75,0.1)',
+-                  color: plan.highlight ? 'var(--black)' : 'var(--gold)',
+-                  fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700,
+-                  letterSpacing: '0.15em', textTransform: 'uppercase', fontSize: '1rem', transition: 'all 0.3s',
++                  background: 'var(--charcoal)',
++                  border: plan.highlight ? '2px solid var(--gold)' : '1px solid var(--border)',
++                  padding: '3rem 2.5rem',
++                  position: 'relative',
++                  display: 'flex',
++                  flexDirection: 'column',
+                 }}
+-                onClick={() => setSelected(i)}
+               >
+-                Select Protocol
+-              </button> */}
+-            </div>
+-          ))}
+-        </div>
++                {plan.badge && (
++                  <div style={{
++                    position: 'absolute', top: -1, left: '50%', transform: 'translateX(-50%)',
++                    background: 'var(--gold)', color: 'var(--black)',
++                    padding: '0.25rem 1.5rem',
++                    fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700,
++                    letterSpacing: '0.2em', fontSize: '0.75rem', textTransform: 'uppercase',
++                  }}>
++                    {plan.badge}
++                  </div>
++                )}
++
++                <h3 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '2.5rem', color: plan.highlight ? 'var(--gold)' : 'var(--cream)', marginBottom: '0.5rem', letterSpacing: '0.05em' }}>
++                  {plan.name}
++                </h3>
++
++                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.25rem', marginBottom: '1rem' }}>
++                  <span style={{ fontSize: '1.5rem', color: 'var(--muted)', marginTop: '0.5rem' }}>$</span>
++                  <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '4.5rem', lineHeight: 1, color: 'var(--cream)' }}>
++                    {formatDollars(plan.amount)}
++                  </span>
++                </div>
+ 
+-        {/* Checkout */}
+-        {/* <div style={{ marginTop: '6rem', background: 'var(--charcoal)', border: '1px solid var(--border)', padding: '4rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4rem' }}>
+-          <div>
+-            <h3 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '2.5rem', color: 'var(--cream)', marginBottom: '1rem', letterSpacing: '0.05em' }}>Secure Checkout</h3>
+-            <p style={{ color: 'var(--muted)', fontSize: '0.9rem', lineHeight: 1.6, marginBottom: '2rem' }}>
+-              Your transformation starts immediately. Access the dashboard, download the training
+-              protocols, and log your starting metrics right after payment.
+-            </p>
+-            <div style={{ display: 'grid', gap: '1rem' }}>
+-              {[
+-                { placeholder: 'Cardholder Name', cols: 1 },
+-                { placeholder: 'Card Number', cols: 1 },
+-              ].map((field, i) => (
+-                <input
+-                  key={i}
+-                  type="text"
+-                  placeholder={field.placeholder}
+-                  style={{ width: '100%', background: 'var(--card)', border: '1px solid rgba(255,255,255,0.1)', color: 'var(--cream)', padding: '1rem', fontFamily: 'inherit', fontSize: '0.9rem' }}
+-                />
+-              ))}
+-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+-                <input type="text" placeholder="MM/YY" style={{ width: '100%', background: 'var(--card)', border: '1px solid rgba(255,255,255,0.1)', color: 'var(--cream)', padding: '1rem', fontFamily: 'inherit', fontSize: '0.9rem' }} />
+-                <input type="text" placeholder="CVC" style={{ width: '100%', background: 'var(--card)', border: '1px solid rgba(255,255,255,0.1)', color: 'var(--cream)', padding: '1rem', fontFamily: 'inherit', fontSize: '0.9rem' }} />
++                <p style={{ color: 'rgba(240,235,224,0.6)', fontSize: '0.9rem', lineHeight: 1.6, paddingBottom: '2rem', borderBottom: '1px solid rgba(255,255,255,0.05)', marginBottom: '2rem' }}>
++                  {plan.desc}
++                </p>
++
++                <ul style={{ listStyle: 'none', flex: 1 }}>
++                  {plan.features.map((f, j) => (
++                    <li key={j} style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem', fontSize: '0.95rem', color: 'var(--cream)' }}>
++                      <span style={{ color: 'var(--gold)', fontSize: '0.8rem' }}>✓</span>
++                      {f}
++                    </li>
++                  ))}
++                </ul>
++
++                <button
++                  onClick={() => startCheckout(plan.id)}
++                  disabled={anyLoading}
++                  aria-busy={isLoading}
++                  style={{
++                    marginTop: '3rem', width: '100%', padding: '1.25rem', border: 'none',
++                    cursor: anyLoading ? 'wait' : 'pointer',
++                    opacity: anyLoading && !isLoading ? 0.5 : 1,
++                    background: plan.highlight ? 'var(--gold)' : 'rgba(200,168,75,0.1)',
++                    color: plan.highlight ? 'var(--black)' : 'var(--gold)',
++                    fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700,
++                    letterSpacing: '0.15em', textTransform: 'uppercase', fontSize: '1rem',
++                    transition: 'all 0.3s',
++                  }}
++                >
++                  {isLoading ? 'Redirecting…' : 'Get Started'}
++                </button>
+               </div>
+-            </div>
+-          </div>
+-          <div style={{ background: 'var(--card)', padding: '3rem', display: 'flex', flexDirection: 'column' }}>
+-            <h4 style={{ fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--gold)', marginBottom: '2rem', fontSize: '0.9rem' }}>
+-              Order Summary
+-            </h4>
+-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '1rem' }}>
+-              <span style={{ color: 'var(--cream)' }}>{PLANS[selected].name}</span>
+-              <span style={{ color: 'var(--cream)', fontWeight: 600 }}>${PLANS[selected].price}.00</span>
+-            </div>
+-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2rem' }}>
+-              <span style={{ color: 'var(--muted)' }}>Initiation Fee</span>
+-              <span style={{ color: 'var(--gold)' }}>Waived</span>
+-            </div>
+-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 'auto', paddingTop: '2rem', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+-              <span style={{ color: 'var(--cream)', fontSize: '1.2rem', fontWeight: 600 }}>Total Due</span>
+-              <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '3rem', lineHeight: 1, color: 'var(--gold)' }}>${PLANS[selected].price}.00</span>
+-            </div>
+-            <button style={{ marginTop: '2rem', background: '#32CD32', color: 'var(--black)', padding: '1.25rem', border: 'none', cursor: 'pointer', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', fontSize: '1.1rem' }}>
+-              Confirm &amp; Pay Securely
+-            </button>
+-          </div>
+-        </div> */}
++            );
++          })}
++        </div>
++
++        {/* Trust line */}
++        <p style={{
++          textAlign: 'center', marginTop: '4rem', color: 'var(--muted)',
++          fontSize: '0.85rem', lineHeight: 1.8, maxWidth: 640, marginLeft: 'auto', marginRight: 'auto',
++        }}>
++          Payments are processed securely by Stripe. APEX never sees or stores your card details.
++          <br />
++          By purchasing you agree to our{' '}
++          <Link href="/terms" style={{ color: 'var(--gold)' }}>Terms of Service</Link>,{' '}
++          <Link href="/refund-policy" style={{ color: 'var(--gold)' }}>Refund Policy</Link> and{' '}
++          <Link href="/privacy" style={{ color: 'var(--gold)' }}>Privacy Policy</Link>.
++        </p>
++
++        <p style={{
++          textAlign: 'center', marginTop: '2rem', color: 'var(--muted)',
++          fontSize: '0.78rem', lineHeight: 1.7, maxWidth: 640, marginLeft: 'auto', marginRight: 'auto',
++          opacity: 0.75,
++        }}>
++          APEX provides fitness and general nutrition coaching. It is not medical care and does not
++          replace advice from your physician. Consult your doctor before beginning any exercise or
++          nutrition program, particularly if you have a heart condition, high blood pressure,
++          diabetes, an injury, or take prescription medication.
++        </p>
+       </div>
+     </div>
+   );
+diff --git a/frontend/app/privacy/page.tsx b/frontend/app/privacy/page.tsx
+index e479988..ccaa857 100644
+--- a/frontend/app/privacy/page.tsx
++++ b/frontend/app/privacy/page.tsx
+@@ -62,6 +62,10 @@ export default function PrivacyPage() {
+           <ul style={listStyle}>
+             <li>Service providers who host our infrastructure and database (currently Supabase) and our
+               website (currently Vercel), strictly to operate the Service on our behalf</li>
++            <li>Our payment processor (currently Stripe), which collects and processes your payment
++              details directly. APEX never receives or stores your full card number. Stripe handles
++              that information under its own privacy policy, available at{' '}
++              <a href="https://stripe.com/privacy" target="_blank" rel="noopener noreferrer">stripe.com/privacy</a></li>
+             <li>Law enforcement or regulators when required by valid legal process</li>
+             <li>A successor entity in the event of a merger, acquisition, or sale of assets, subject to
+               the same protections described in this policy</li>
+diff --git a/frontend/app/refund-policy/page.tsx b/frontend/app/refund-policy/page.tsx
+new file mode 100644
+index 0000000..e8ebcf4
+--- /dev/null
++++ b/frontend/app/refund-policy/page.tsx
+@@ -0,0 +1,130 @@
++import Link from 'next/link';
++
++export const metadata = {
++  title: 'Refund Policy | APEX Human Performance',
++  description:
++    'APEX Human Performance refund policy, including the terms of the 90-day results commitment.',
++};
++
++const updated = 'August 17, 2026';
++
++export default function RefundPolicyPage() {
++  return (
++    <div className="section" style={{ minHeight: 'calc(100vh - 72px)' }}>
++      <div className="section-inner" style={{ maxWidth: 760 }}>
++        <div className="section-label">Legal</div>
++        <h2 id="refund-policy" className="section-h2">Refund Policy</h2>
++        <p className="section-sub" style={{ maxWidth: 760 }}>Last updated: {updated}</p>
++
++        <div style={{ marginTop: '3rem', color: 'var(--muted)', fontSize: '0.95rem', lineHeight: 1.8 }}>
++          <p>
++            This policy explains when you can get your money back, how to ask, and how long it takes.
++            It applies to every program and service purchased through this website. Nothing here
++            limits any right you have under applicable consumer protection law.
++          </p>
++
++          <h3 id="cooling-off" style={sectionHeading}>1. 14-Day Cooling-Off Period</h3>
++          <p>
++            You may cancel any program within <strong style={{ color: 'var(--cream)' }}>14 days</strong>{' '}
++            of purchase for a full refund, provided you have not completed more than two coaching
++            sessions and have not downloaded the complete program materials. Simply email us and ask —
++            no explanation required.
++          </p>
++
++          <h3 id="results-commitment" style={sectionHeading}>2. The 90-Day Results Commitment</h3>
++          <p>
++            We advertise a 90-day results commitment on our 3-month program. Here is exactly what that
++            means, so there is no ambiguity on either side.
++          </p>
++          <p>
++            <strong style={{ color: 'var(--cream)' }}>What we commit to:</strong> if you complete the
++            full 12-week program as prescribed and do not achieve measurable progress against the
++            baseline metrics recorded at your intake, we will refund the program fee in full.
++          </p>
++          <p><strong style={{ color: 'var(--cream)' }}>What &quot;as prescribed&quot; requires:</strong></p>
++          <ul style={listStyle}>
++            <li>You completed your intake and recorded baseline measurements at the start</li>
++            <li>You logged at least 80% of prescribed training sessions</li>
++            <li>You submitted your scheduled check-ins with your coach</li>
++            <li>You followed the nutrition guidance provided, or told your coach why you could not</li>
++            <li>You raise the claim within 30 days of finishing the 12-week program</li>
++          </ul>
++          <p>
++            These conditions exist because we cannot be accountable for a program that was not
++            followed. If your circumstances changed mid-program — injury, illness, a family emergency —
++            tell us. We would rather pause your program or work something out than hold you to a
++            technicality.
++          </p>
++          <p style={{ marginTop: '1.5rem' }}>
++            <strong style={{ color: 'var(--cream)' }}>Important:</strong> this is a commitment about
++            your money, not a medical or physiological guarantee. Individual results vary
++            substantially based on genetics, starting condition, age, adherence, sleep, stress, and
++            medical history. No coach can guarantee a specific physical outcome, and we do not claim
++            to. What we guarantee is that if you do the work and it does not work, you do not pay.
++          </p>
++
++          <h3 id="one-on-one" style={sectionHeading}>3. 1-on-1 Coaching Sessions</h3>
++          <p>
++            Unused sessions are refundable at any time. Sessions already delivered are not
++            refundable. Cancellations made more than 24 hours before a scheduled session are
++            rescheduled at no cost; later cancellations or no-shows consume the session.
++          </p>
++
++          <h3 id="nutrition-plans" style={sectionHeading}>4. Customized Nutrition Plans</h3>
++          <p>
++            Because these are built individually for you, they are refundable in full before the plan
++            is delivered. Once your personalized plan has been sent, refunds are available at our
++            discretion — but if the plan does not reflect what you asked for, we will revise it or
++            refund you.
++          </p>
++
++          <h3 id="how-to-request" style={sectionHeading}>5. How to Request a Refund</h3>
++          <p>
++            Email us or use our <Link href="/contact">contact page</Link> with the email address you
++            used at checkout and a brief note about what you would like refunded. We aim to respond
++            within two business days.
++          </p>
++
++          <h3 id="processing" style={sectionHeading}>6. How Refunds Are Processed</h3>
++          <p>
++            Approved refunds are returned to the original payment method through Stripe. Once we
++            issue the refund, it typically appears on your statement within 5–10 business days,
++            depending on your bank. We do not charge a processing or restocking fee.
++          </p>
++
++          <h3 id="chargebacks" style={sectionHeading}>7. Disputes and Chargebacks</h3>
++          <p>
++            If something has gone wrong, please contact us first — we can almost always resolve it
++            faster than a bank dispute can. If you are unsatisfied with our response, you retain every
++            right to dispute the charge with your card issuer.
++          </p>
++
++          <h3 id="contact" style={sectionHeading}>8. Contact</h3>
++          <p>
++            Questions about this policy? Reach us through our{' '}
++            <Link href="/contact">contact page</Link>. See also our{' '}
++            <Link href="/terms">Terms of Service</Link> and{' '}
++            <Link href="/privacy">Privacy Policy</Link>.
++          </p>
++        </div>
++      </div>
++    </div>
++  );
++}
++
++const sectionHeading: React.CSSProperties = {
++  color: 'var(--cream)',
++  fontFamily: "'Barlow Condensed', sans-serif",
++  letterSpacing: '0.04em',
++  fontSize: '1.15rem',
++  marginTop: '2.5rem',
++  marginBottom: '0.75rem',
++};
++
++const listStyle: React.CSSProperties = {
++  paddingLeft: '1.25rem',
++  margin: '0.5rem 0 1rem',
++  display: 'flex',
++  flexDirection: 'column',
++  gap: '0.4rem',
++};
+diff --git a/frontend/app/sitemap.ts b/frontend/app/sitemap.ts
+index c782fcf..836afcf 100644
+--- a/frontend/app/sitemap.ts
++++ b/frontend/app/sitemap.ts
+@@ -1,6 +1,8 @@
+ import type { MetadataRoute } from 'next';
+ 
+-const BASE_URL = 'https://apexfitnessnyc.vercel.app';
++// Update this if the canonical domain ever changes. It should match
++// NEXT_PUBLIC_SITE_URL in the Vercel environment variables.
++const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://apexfitness.fit';
+ 
+ export default function sitemap(): MetadataRoute.Sitemap {
+   return [
+@@ -10,6 +12,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
+     { url: `${BASE_URL}/pricing`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.9 },
+     { url: `${BASE_URL}/contact`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.7 },
+     { url: `${BASE_URL}/links`, lastModified: new Date(), changeFrequency: 'yearly', priority: 0.3 },
++    { url: `${BASE_URL}/terms`, lastModified: new Date(), changeFrequency: 'yearly', priority: 0.2 },
++    { url: `${BASE_URL}/refund-policy`, lastModified: new Date(), changeFrequency: 'yearly', priority: 0.2 },
+     { url: `${BASE_URL}/privacy`, lastModified: new Date(), changeFrequency: 'yearly', priority: 0.2 },
+   ];
+ }
+diff --git a/frontend/app/terms/page.tsx b/frontend/app/terms/page.tsx
+new file mode 100644
+index 0000000..31d23e0
+--- /dev/null
++++ b/frontend/app/terms/page.tsx
+@@ -0,0 +1,176 @@
++import Link from 'next/link';
++
++export const metadata = {
++  title: 'Terms of Service | APEX Human Performance',
++  description: 'The terms governing use of the APEX Human Performance website and coaching services.',
++};
++
++const updated = 'August 17, 2026';
++
++export default function TermsPage() {
++  return (
++    <div className="section" style={{ minHeight: 'calc(100vh - 72px)' }}>
++      <div className="section-inner" style={{ maxWidth: 760 }}>
++        <div className="section-label">Legal</div>
++        <h2 id="terms-of-service" className="section-h2">Terms of Service</h2>
++        <p className="section-sub" style={{ maxWidth: 760 }}>Last updated: {updated}</p>
++
++        <div style={{ marginTop: '3rem', color: 'var(--muted)', fontSize: '0.95rem', lineHeight: 1.8 }}>
++          <p>
++            These Terms govern your use of this website and any coaching, training, or nutrition
++            services you purchase through it (the &quot;Service&quot;), operated by [COMPANY NAME]
++            (&quot;APEX,&quot; &quot;we,&quot; &quot;us&quot;). By using the site or purchasing a
++            program, you agree to these Terms.
++          </p>
++
++          <h3 id="health-notice" style={sectionHeading}>1. Health and Safety Notice — Please Read</h3>
++          <p>
++            <strong style={{ color: 'var(--cream)' }}>APEX provides fitness coaching, not medical
++            care.</strong> We are not physicians, dietitians, physical therapists, or licensed
++            healthcare providers, and nothing we provide is medical advice, diagnosis, or treatment.
++            Our coaches do not prescribe, recommend, or manage medication, hormone therapy, or
++            supplements as medical treatment.
++          </p>
++          <p>
++            You should consult a physician before beginning any exercise or nutrition program. This
++            matters especially if you are over 40, have been sedentary, or have or suspect any of the
++            following: heart disease, high blood pressure, diabetes, a metabolic or endocrine
++            condition, joint or musculoskeletal injury, a respiratory condition, or you are taking
++            prescription medication.
++          </p>
++          <p>
++            <strong style={{ color: 'var(--cream)' }}>Stop exercising and seek immediate medical
++            attention</strong> if you experience chest pain or pressure, pain radiating into the arm
++            or jaw, severe shortness of breath, dizziness, fainting, or an irregular heartbeat.
++          </p>
++          <p>
++            You participate voluntarily and assume the inherent risks of physical training, including
++            the risk of injury. You agree to disclose relevant medical conditions to your coach and to
++            keep that information current.
++          </p>
++
++          <h3 id="no-guarantee" style={sectionHeading}>2. Results and Claims</h3>
++          <p>
++            Individual results vary and depend on factors outside our control, including your genetics,
++            starting condition, medical history, adherence, sleep, and stress. Testimonials and
++            examples shown on this site reflect individual experiences and are not a promise that you
++            will achieve the same outcome.
++          </p>
++          <p>
++            Where we advertise a 90-day results commitment, that is a{' '}
++            <strong style={{ color: 'var(--cream)' }}>financial</strong> commitment governed by our{' '}
++            <Link href="/refund-policy">Refund Policy</Link> — not a guarantee of any specific
++            physiological result.
++          </p>
++
++          <h3 id="eligibility" style={sectionHeading}>3. Eligibility</h3>
++          <p>
++            You must be at least 18 years old and able to enter a binding contract to purchase the
++            Service.
++          </p>
++
++          <h3 id="purchases" style={sectionHeading}>4. Purchases and Payment</h3>
++          <ul style={listStyle}>
++            <li>All prices are in U.S. dollars and are charged as a single one-time payment unless
++              expressly described otherwise at checkout.</li>
++            <li>Payments are processed by Stripe. By purchasing, you also agree to Stripe&apos;s terms.
++              We do not receive or store your full card details.</li>
++            <li>Program access begins once payment clears and you have completed intake.</li>
++            <li>We may change prices at any time, but a change never affects a program you have
++              already purchased.</li>
++          </ul>
++
++          <h3 id="refunds" style={sectionHeading}>5. Refunds and Cancellation</h3>
++          <p>
++            Refunds are governed by our <Link href="/refund-policy">Refund Policy</Link>, which forms
++            part of these Terms.
++          </p>
++
++          <h3 id="your-responsibilities" style={sectionHeading}>6. Your Responsibilities</h3>
++          <ul style={listStyle}>
++            <li>Provide accurate information at intake, including relevant health information</li>
++            <li>Follow the program as prescribed, and tell your coach when you cannot</li>
++            <li>Use good judgment and stop if something hurts</li>
++            <li>Keep any account credentials confidential</li>
++          </ul>
++
++          <h3 id="intellectual-property" style={sectionHeading}>7. Intellectual Property</h3>
++          <p>
++            All program materials, training protocols, written content, and media on this site are
++            owned by APEX. When you purchase a program you receive a personal, non-transferable
++            licence to use those materials for your own training. You may not resell, redistribute,
++            publish, or share them, or use them to coach others commercially.
++          </p>
++
++          <h3 id="acceptable-use" style={sectionHeading}>8. Acceptable Use</h3>
++          <p>
++            Do not misuse the site: no attempting to breach security or access other users&apos; data,
++            no scraping or automated data collection, no interfering with the Service&apos;s operation,
++            and no unlawful, harassing, or abusive conduct toward staff or other clients.
++          </p>
++
++          <h3 id="termination" style={sectionHeading}>9. Termination</h3>
++          <p>
++            We may suspend or terminate access if you materially breach these Terms, behave abusively
++            toward our staff or clients, or if continuing would be unsafe for you. Where we terminate
++            for reasons other than your breach, we will refund the unused portion of your program.
++          </p>
++
++          <h3 id="disclaimers" style={sectionHeading}>10. Disclaimers and Limitation of Liability</h3>
++          <p>
++            The Service is provided &quot;as is.&quot; To the fullest extent permitted by law, we
++            disclaim implied warranties of merchantability and fitness for a particular purpose.
++          </p>
++          <p>
++            To the fullest extent permitted by law, our total liability arising out of the Service is
++            limited to the amount you paid us in the twelve months preceding the claim.{' '}
++            <strong style={{ color: 'var(--cream)' }}>Nothing in these Terms excludes or limits
++            liability for death or personal injury caused by our negligence, for fraud, or for any
++            other liability that cannot lawfully be excluded.</strong>
++          </p>
++
++          <h3 id="governing-law" style={sectionHeading}>11. Governing Law</h3>
++          <p>
++            These Terms are governed by the laws of the State of New York, without regard to conflict
++            of law principles. Disputes will be brought in the state or federal courts located in New
++            York County, New York. This does not affect any right you have to bring a claim in your
++            local small claims court, or any mandatory consumer protection rights in your state of
++            residence.
++          </p>
++
++          <h3 id="changes" style={sectionHeading}>12. Changes to These Terms</h3>
++          <p>
++            We may update these Terms. Material changes will be reflected in the &quot;Last
++            updated&quot; date above. Changes do not apply retroactively to programs already
++            purchased.
++          </p>
++
++          <h3 id="contact" style={sectionHeading}>13. Contact</h3>
++          <p>
++            Questions about these Terms? Reach us through our{' '}
++            <Link href="/contact">contact page</Link>. See also our{' '}
++            <Link href="/privacy">Privacy Policy</Link> and{' '}
++            <Link href="/refund-policy">Refund Policy</Link>.
++          </p>
++        </div>
++      </div>
++    </div>
++  );
++}
++
++const sectionHeading: React.CSSProperties = {
++  color: 'var(--cream)',
++  fontFamily: "'Barlow Condensed', sans-serif",
++  letterSpacing: '0.04em',
++  fontSize: '1.15rem',
++  marginTop: '2.5rem',
++  marginBottom: '0.75rem',
++};
++
++const listStyle: React.CSSProperties = {
++  paddingLeft: '1.25rem',
++  margin: '0.5rem 0 1rem',
++  display: 'flex',
++  flexDirection: 'column',
++  gap: '0.4rem',
++};
+diff --git a/frontend/components/Footer.tsx b/frontend/components/Footer.tsx
+index a3936a5..9fb181e 100644
+--- a/frontend/components/Footer.tsx
++++ b/frontend/components/Footer.tsx
+@@ -60,6 +60,8 @@ export default function Footer() {
+         <div className={styles.footerBottomLinks}>
+           <Link href="/contact">Contact</Link>
+           <Link href="/pricing">Get Started</Link>
++          <Link href="/terms">Terms of Service</Link>
++          <Link href="/refund-policy">Refund Policy</Link>
+           <Link href="/privacy">Privacy Policy</Link>
+         </div>
+       </div>
+diff --git a/frontend/lib/plans.ts b/frontend/lib/plans.ts
+new file mode 100644
+index 0000000..6525c43
+--- /dev/null
++++ b/frontend/lib/plans.ts
+@@ -0,0 +1,95 @@
++/**
++ * Canonical plan catalogue.
++ *
++ * This is the single source of truth for what things cost. The pricing page
++ * renders from it, and the checkout API prices from it.
++ *
++ * SECURITY: the browser only ever sends us a plan `id`. The amount charged is
++ * looked up here, server-side. Never accept a price from the client — that
++ * would let anyone buy a $600 program for $1 by editing the request.
++ */
++
++export type Plan = {
++  id: string;
++  name: string;
++  /** Price in cents. Stripe works in the smallest currency unit. */
++  amount: number;
++  desc: string;
++  features: string[];
++  highlight?: boolean;
++  badge?: string;
++  /** Whether this product requires scheduling a session after purchase. */
++  requiresBooking?: boolean;
++};
++
++export const PLANS: Plan[] = [
++  {
++    id: 'program-1-month',
++    name: '1-Month Program',
++    amount: 30000,
++    desc: 'Full access to the 4-week APEX foundation protocol and nutrition dashboard.',
++    features: [
++      'Month 1 Training Regiment',
++      'Macro Tracking Dashboard',
++      'Weekly Progress Tracking',
++      'Community Access',
++    ],
++  },
++  {
++    id: 'program-2-month',
++    name: '2-Month Program',
++    amount: 45000,
++    desc: 'Access to Month 1 (Foundation) and Month 2 (MetCon) programs.',
++    features: ['Everything in 1-Month', 'Month 2 MetCon Curriculum', 'Priority Support'],
++    highlight: true,
++    badge: 'Most Popular',
++  },
++  {
++    id: 'program-3-month',
++    name: '3-Month Program',
++    amount: 60000,
++    desc: 'The complete 12-week APEX lifecycle, including Longevity and Peak performance.',
++    features: [
++      'Everything in 2-Month',
++      'Month 3 Longevity Curriculum',
++      '90-Day Results Commitment',
++    ],
++  },
++  {
++    id: 'coaching-1-on-1',
++    name: '1-on-1 Coaching',
++    amount: 20000,
++    desc: 'Personalized coaching sessions tailored to your individual needs and goals.',
++    features: [
++      '1 hour one-on-one coaching',
++      'Customized workout plans',
++      'Accountability and support',
++    ],
++    requiresBooking: true,
++  },
++  {
++    id: 'nutrition-custom',
++    name: 'Customized Nutrition Plan',
++    amount: 50000,
++    desc: 'Personalized nutrition plans tailored to your individual needs and goals.',
++    features: [
++      'Included macros',
++      'Customized meal plans',
++      'Dietary restriction support',
++      'Weekly and monthly check-ins',
++    ],
++    requiresBooking: true,
++  },
++];
++
++export function getPlan(id: string): Plan | undefined {
++  return PLANS.find((p) => p.id === id);
++}
++
++/** Format cents as a whole-dollar display string, e.g. 30000 -> "300". */
++export function formatDollars(amount: number): string {
++  return (amount / 100).toLocaleString('en-US', {
++    minimumFractionDigits: 0,
++    maximumFractionDigits: 2,
++  });
++}
+diff --git a/frontend/lib/stripe.ts b/frontend/lib/stripe.ts
+new file mode 100644
+index 0000000..8c1770a
+--- /dev/null
++++ b/frontend/lib/stripe.ts
+@@ -0,0 +1,38 @@
++import Stripe from 'stripe';
++
++/**
++ * Server-only Stripe client.
++ *
++ * SECURITY: STRIPE_SECRET_KEY must never reach the browser. Only import this
++ * from route handlers or server components.
++ */
++let stripe: Stripe | null = null;
++
++export function getStripe(): Stripe {
++  if (stripe) return stripe;
++
++  const key = process.env.STRIPE_SECRET_KEY;
++  if (!key) {
++    throw new Error(
++      'STRIPE_SECRET_KEY is not set. Add it in Vercel → Settings → Environment Variables.'
++    );
++  }
++
++  stripe = new Stripe(key, {
++    apiVersion: '2026-07-29.dahlia',
++    typescript: true,
++  });
++
++  return stripe;
++}
++
++/**
++ * Absolute base URL for building Stripe redirect URLs.
++ * Stripe requires fully-qualified success/cancel URLs.
++ */
++export function getBaseUrl(): string {
++  if (process.env.NEXT_PUBLIC_SITE_URL) return process.env.NEXT_PUBLIC_SITE_URL;
++  // Vercel provides this automatically on preview deployments.
++  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
++  return 'http://localhost:3000';
++}
+diff --git a/frontend/lib/supabaseAdmin.ts b/frontend/lib/supabaseAdmin.ts
+new file mode 100644
+index 0000000..92df998
+--- /dev/null
++++ b/frontend/lib/supabaseAdmin.ts
+@@ -0,0 +1,28 @@
++import { createClient, SupabaseClient } from '@supabase/supabase-js';
++
++/**
++ * Server-only Supabase client using the service-role key.
++ *
++ * SECURITY: the service-role key bypasses Row Level Security. It must never be
++ * imported into a client component or exposed through a NEXT_PUBLIC_ variable.
++ * Every file that imports this module must be a route handler or server
++ * component.
++ */
++let client: SupabaseClient | null = null;
++
++export function getDb(): SupabaseClient {
++  if (client) return client;
++
++  const url = process.env.SUPABASE_URL;
++  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
++
++  if (!url) throw new Error('SUPABASE_URL must be set.');
++  if (!serviceRoleKey) throw new Error('SUPABASE_SERVICE_ROLE_KEY must be set.');
++
++  client = createClient(url, serviceRoleKey, {
++    auth: { persistSession: false },
++    db: { schema: 'public' },
++  });
++
++  return client;
++}
+diff --git a/frontend/package-lock.json b/frontend/package-lock.json
+index 72388c3..0beb2d2 100644
+--- a/frontend/package-lock.json
++++ b/frontend/package-lock.json
+@@ -8,9 +8,11 @@
+       "name": "apexfitness",
+       "version": "0.1.0",
+       "dependencies": {
++        "@supabase/supabase-js": "^2.112.3",
+         "next": "16.2.1",
+         "react": "19.2.4",
+-        "react-dom": "19.2.4"
++        "react-dom": "19.2.4",
++        "stripe": "^22.5.0"
+       },
+       "devDependencies": {
+         "@types/node": "^20",
+@@ -629,6 +631,98 @@
+         "node": ">= 10"
+       }
+     },
++    "node_modules/@supabase/auth-js": {
++      "version": "2.112.3",
++      "resolved": "https://registry.npmjs.org/@supabase/auth-js/-/auth-js-2.112.3.tgz",
++      "integrity": "sha512-NA0rsgAlWZPvbhw8aUdmgfpHVgUAcd8zK5ov43l++o1bLIPXZhRiAlRobhwF5AatQuovpqxsMH50F4oyyV4XZw==",
++      "license": "MIT",
++      "dependencies": {
++        "tslib": "2.8.1"
++      },
++      "engines": {
++        "node": ">=22.0.0"
++      }
++    },
++    "node_modules/@supabase/functions-js": {
++      "version": "2.112.3",
++      "resolved": "https://registry.npmjs.org/@supabase/functions-js/-/functions-js-2.112.3.tgz",
++      "integrity": "sha512-gfv481mTOVWtZIJgXupxZpni2V2UWPf6jeF/jOK7HdMHdH+mt6sU0sHHwf0POsPip8ltlulu9OUHgwVzl5ddRw==",
++      "license": "MIT",
++      "dependencies": {
++        "tslib": "2.8.1"
++      },
++      "engines": {
++        "node": ">=22.0.0"
++      }
++    },
++    "node_modules/@supabase/phoenix": {
++      "version": "0.4.5",
++      "resolved": "https://registry.npmjs.org/@supabase/phoenix/-/phoenix-0.4.5.tgz",
++      "integrity": "sha512-aAn9H9ovVyeApKy11OWOrrOGq8DV68yWeH4ud2lN9fzn4aO8Zb5GLL9m1pUg9nLqIcT+ZDfAcsZe0E/nqdv2lw==",
++      "license": "MIT"
++    },
++    "node_modules/@supabase/postgrest-js": {
++      "version": "2.112.3",
++      "resolved": "https://registry.npmjs.org/@supabase/postgrest-js/-/postgrest-js-2.112.3.tgz",
++      "integrity": "sha512-+Mf6uCpzr00bqxwX8hTK2X2L9eAL/1vuOjdEjx6upz9ulb0RmQT16XeU/JkMUlVHw/B46ZnPa2busY4Kd9YCzw==",
++      "license": "MIT",
++      "dependencies": {
++        "tslib": "2.8.1"
++      },
++      "engines": {
++        "node": ">=22.0.0"
++      }
++    },
++    "node_modules/@supabase/realtime-js": {
++      "version": "2.112.3",
++      "resolved": "https://registry.npmjs.org/@supabase/realtime-js/-/realtime-js-2.112.3.tgz",
++      "integrity": "sha512-E6wljXWs7DUOloyIB69i3YFInWE6IyCvgTAbQ0KYxOHv26FdA1KzEXTuzxrYEdf70t406Z9BRwUlGyclGF2FXA==",
++      "license": "MIT",
++      "dependencies": {
++        "@supabase/phoenix": "0.4.5",
++        "tslib": "2.8.1"
++      },
++      "engines": {
++        "node": ">=22.0.0"
++      }
++    },
++    "node_modules/@supabase/storage-js": {
++      "version": "2.112.3",
++      "resolved": "https://registry.npmjs.org/@supabase/storage-js/-/storage-js-2.112.3.tgz",
++      "integrity": "sha512-oSK61tzlUvg+BWPqpKQCu9qqonsO26btaoAR9D6Gest2aj7xUqToj9rKyaoYOJczkhg9BjqA1REbYy9tPI4bDA==",
++      "license": "MIT",
++      "dependencies": {
++        "iceberg-js": "^0.8.1",
++        "tslib": "2.8.1"
++      },
++      "engines": {
++        "node": ">=22.0.0"
++      }
++    },
++    "node_modules/@supabase/supabase-js": {
++      "version": "2.112.3",
++      "resolved": "https://registry.npmjs.org/@supabase/supabase-js/-/supabase-js-2.112.3.tgz",
++      "integrity": "sha512-Jv1bxVQmEJNkjvPEhFaKjPzsh+Ozyew6lWGD+SoYcsclDEP1z7yEvKvfUQfzy0DkxRIQnZNxmmWtAzw5XLTQoA==",
++      "license": "MIT",
++      "dependencies": {
++        "@supabase/auth-js": "2.112.3",
++        "@supabase/functions-js": "2.112.3",
++        "@supabase/postgrest-js": "2.112.3",
++        "@supabase/realtime-js": "2.112.3",
++        "@supabase/storage-js": "2.112.3"
++      },
++      "engines": {
++        "node": ">=22.0.0"
++      },
++      "peerDependencies": {
++        "@opentelemetry/api": ">=1.0.0"
++      },
++      "peerDependenciesMeta": {
++        "@opentelemetry/api": {
++          "optional": true
++        }
++      }
++    },
+     "node_modules/@swc/helpers": {
+       "version": "0.5.15",
+       "resolved": "https://registry.npmjs.org/@swc/helpers/-/helpers-0.5.15.tgz",
+@@ -642,7 +736,7 @@
+       "version": "20.19.37",
+       "resolved": "https://registry.npmjs.org/@types/node/-/node-20.19.37.tgz",
+       "integrity": "sha512-8kzdPJ3FsNsVIurqBs7oodNnCEVbni9yUEkaHbgptDACOPW04jimGagZ51E6+lXUwJjgnBw+hyko/lkFWCldqw==",
+-      "dev": true,
++      "devOptional": true,
+       "license": "MIT",
+       "dependencies": {
+         "undici-types": "~6.21.0"
+@@ -723,6 +817,15 @@
+         "node": ">=8"
+       }
+     },
++    "node_modules/iceberg-js": {
++      "version": "0.8.1",
++      "resolved": "https://registry.npmjs.org/iceberg-js/-/iceberg-js-0.8.1.tgz",
++      "integrity": "sha512-1dhVQZXhcHje7798IVM+xoo/1ZdVfzOMIc8/rgVSijRK38EDqOJoGula9N/8ZI5RD8QTxNQtK/Gozpr+qUqRRA==",
++      "license": "MIT",
++      "engines": {
++        "node": ">=20.0.0"
++      }
++    },
+     "node_modules/nanoid": {
+       "version": "3.3.11",
+       "resolved": "https://registry.npmjs.org/nanoid/-/nanoid-3.3.11.tgz",
+@@ -922,6 +1025,23 @@
+         "node": ">=0.10.0"
+       }
+     },
++    "node_modules/stripe": {
++      "version": "22.5.0",
++      "resolved": "https://registry.npmjs.org/stripe/-/stripe-22.5.0.tgz",
++      "integrity": "sha512-QVwMwriC0bbySx6R4dpsvJ0W//GojC1kwWVS6rPSoVqDUIZX4Hy3TaUrd2AZeXEAaKbfWIjQjvo3vKAReHZ0vQ==",
++      "license": "MIT",
++      "engines": {
++        "node": ">=18"
++      },
++      "peerDependencies": {
++        "@types/node": ">=18"
++      },
++      "peerDependenciesMeta": {
++        "@types/node": {
++          "optional": true
++        }
++      }
++    },
+     "node_modules/styled-jsx": {
+       "version": "5.1.6",
+       "resolved": "https://registry.npmjs.org/styled-jsx/-/styled-jsx-5.1.6.tgz",
+@@ -969,7 +1089,7 @@
+       "version": "6.21.0",
+       "resolved": "https://registry.npmjs.org/undici-types/-/undici-types-6.21.0.tgz",
+       "integrity": "sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ==",
+-      "dev": true,
++      "devOptional": true,
+       "license": "MIT"
+     }
+   }
+diff --git a/frontend/package.json b/frontend/package.json
+index cb9f57c..88f2a5f 100644
+--- a/frontend/package.json
++++ b/frontend/package.json
+@@ -8,9 +8,11 @@
+     "start": "next start"
+   },
+   "dependencies": {
++    "@supabase/supabase-js": "^2.112.3",
+     "next": "16.2.1",
+     "react": "19.2.4",
+-    "react-dom": "19.2.4"
++    "react-dom": "19.2.4",
++    "stripe": "^22.5.0"
+   },
+   "devDependencies": {
+     "@types/node": "^20",

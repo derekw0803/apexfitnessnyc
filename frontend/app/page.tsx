@@ -2,9 +2,9 @@
 import { useEffect, useRef, useState } from 'react';
 
 const TICKER_ITEMS = [
-  '90-Day Guaranteed Transformation',
+  '90-Day Transformation System',
   'Men 40+ Only',
-  '$300/Month — Less Than Any Competitor',
+  '$300/Month, Less Than Any Competitor',
   'Hormone-Optimized Nutrition',
   "NYC's #1 Senior Men's Program",
   '97% Completion Rate',
@@ -14,7 +14,7 @@ const SCIENCE = [
   {
     num: '01',
     title: 'Testosterone Decline: 1–2% Per Year',
-    body: 'After 40, men lose testosterone at 1–2% annually. By 55, many have 30–40% less than their peak. This drives fat gain (especially visceral), muscle loss, low energy, and reduced motivation. APEX training is specifically designed around compound lifts, sprint intervals, and sleep protocols that maximize the body\'s natural testosterone production — without pharmaceuticals.',
+    body: 'After 40, men lose testosterone at 1–2% annually. By 55, many have 30–40% less than their peak. This drives fat gain (especially visceral), muscle loss, low energy, and reduced motivation. APEX training is specifically designed around compound lifts, sprint intervals, and sleep protocols that maximize the body\'s natural testosterone production. No pharmaceuticals.',
   },
   {
     num: '02',
@@ -24,17 +24,17 @@ const SCIENCE = [
   {
     num: '03',
     title: 'Insulin Sensitivity Drops After 40',
-    body: 'Carbohydrate tolerance decreases significantly with age. Eating carbs the same way you did at 30 leads to fat storage, energy crashes, and prediabetes risk. APEX nutrition times carbohydrates precisely around training windows and eliminates them at night — matching food to the biological clock of the aging male metabolism.',
+    body: 'Carbohydrate tolerance decreases significantly with age. Eating carbs the same way you did at 30 leads to fat storage, energy crashes, and prediabetes risk. APEX nutrition times carbohydrates precisely around training windows and eliminates them at night. That matches food to the biological clock of the aging male metabolism.',
   },
   {
     num: '04',
-    title: 'Recovery Takes Longer — and That\'s OK',
-    body: 'After 40, cortisol clearance slows and mTOR signaling (muscle repair) takes 20–40% longer than in younger men. Generic programs ignore this and lead to chronic injury. APEX builds in mandatory recovery days, periodizes intensity across 3-week cycles, and programs sleep as a training variable — because that\'s exactly what it is.',
+    title: 'Recovery Takes Longer. That\'s OK.',
+    body: 'After 40, cortisol clearance slows and mTOR signaling (muscle repair) takes 20–40% longer than in younger men. Generic programs ignore this and lead to chronic injury. APEX builds in mandatory recovery days, periodizes intensity across 3-week cycles, and programs sleep as a training variable. That\'s exactly what it is.',
   },
   {
     num: '05',
     title: 'Inflammation: The Root of "Feeling Old"',
-    body: 'Chronic low-grade inflammation — called inflammaging — is the primary driver of fatigue, joint pain, slow recovery, and disease risk in men over 40. APEX\'s anti-inflammatory nutrition protocol (Omega-3s, turmeric, Mediterranean-style eating) directly targets this mechanism, often producing dramatic changes in how members feel within the first 2 weeks.',
+    body: 'Chronic low-grade inflammation has a name: inflammaging. It\'s the primary driver of fatigue, joint pain, slow recovery, and disease risk in men over 40. APEX\'s anti-inflammatory nutrition protocol (Omega-3s, turmeric, Mediterranean-style eating) directly targets this mechanism, often producing dramatic changes in how members feel within the first 2 weeks.',
   },
 ];
 
@@ -89,15 +89,15 @@ const FAQS = [
   },
   {
     q: 'How is this different from hiring a personal trainer?',
-    a: 'Most personal trainers lack formal knowledge of age-related hormonal decline. APEX is built on clinical research specific to men 40+ and costs a fraction of in-person training — with a results guarantee that no trainer offers.',
+    a: 'Most personal trainers lack formal knowledge of age-related hormonal decline. APEX is built on clinical research specific to men 40+ and costs a fraction of in-person training.',
   },
   {
     q: 'What if I travel frequently or miss days?',
-    a: 'Every program includes travel-friendly alternatives and built-in flexibility windows. Missing a day has zero impact on your 90-day outcome — the program is periodized to absorb life.',
+    a: 'Every program includes travel-friendly alternatives and built-in flexibility windows. Missing a day has zero impact on your 90-day outcome. The program is periodized to absorb life.',
   },
   {
     q: "I'm already in decent shape. Is this still for me?",
-    a: 'APEX is built for optimization, not just recovery. Members who enter already active routinely report the biggest gains — because for the first time, their programming actually matches their physiology.',
+    a: 'APEX is built for optimization, not just recovery. Members who enter already active routinely report the biggest gains, because for the first time their programming actually matches their physiology.',
   },
 ];
 
@@ -138,7 +138,7 @@ export default function Home() {
             YOU ARE<br />NOT DONE<br />YET.
           </h1>
           <p style={{ color: 'var(--text)', fontSize: '1.1rem', lineHeight: 1.7, maxWidth: 560, marginBottom: '2.5rem' }}>
-            The best NYC fitness system engineered exclusively for men 40+.
+            NYC's fitness system engineered exclusively for men 40+.
             Precision training, hormone-optimized nutrition, and a documented 90-day body
             transformation<em style={{ color: 'var(--gold)', fontStyle: 'normal' }}>.</em>
           </p>
@@ -193,9 +193,9 @@ export default function Home() {
           <div className="section-label">The Science</div>
           <h2 id="why-40-is-different" className="section-h2">Why 40 Is Different.</h2>
           <p className="section-sub" style={{ marginBottom: '4rem' }}>
-            APEX isn&apos;t a modified general fitness program. It&apos;s a system built from the ground up
-            around the endocrinology, musculoskeletal changes, and metabolic shifts that define
-            male physiology after 40.
+            APEX isn&apos;t a modified general fitness program. Every protocol accounts for the
+            endocrinology, musculoskeletal changes, and metabolic shifts that define male
+            physiology after 40.
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
             {SCIENCE.map((s) => (
