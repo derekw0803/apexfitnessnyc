@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/supabaseAdmin';
+import { notifyDiscord } from '@/lib/discord';
 
 export const runtime = 'nodejs';
 // Never cache a form submission endpoint.
@@ -67,6 +68,15 @@ export async function POST(request: NextRequest) {
     });
 
     if (error) throw error;
+
+    // Best-effort: the lead is already safely in Supabase above, so a
+    // notification failure must never fail the request or the user sees an
+    // error despite their submission having actually succeeded.
+    try {
+      await notifyDiscord({ firstName, lastName, email, phone });
+    } catch (notifyErr) {
+      console.error('[contact] Discord notification failed:', notifyErr);
+    }
 
     return NextResponse.json({ success: true });
   } catch (err) {
