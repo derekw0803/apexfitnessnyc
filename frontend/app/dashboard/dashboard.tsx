@@ -5,8 +5,7 @@ export default function DashboardPage() {
         <div className="section-label">Members</div>
         <h2 id="dashboard" className="section-h2">Member Portal</h2>
         <p className="section-sub">
-          The member dashboard — nutrition tracking, workout logs, and progress metrics —
-          is coming soon.
+          The member dashboard (nutrition tracking, workout logs, progress metrics) is coming soon.
         </p>
         <div style={{ marginTop: '2rem' }}>
           <a className="btn-gold" href="/pricing">Get Access →</a>

@@ -5,11 +5,22 @@ import Link from 'next/link';
 import styles from './contact.module.css';
 import useContact from './useContact';
 
+function FieldError({ text }: { text: string }) {
+  return (
+    <span style={{ color: '#f87171', fontSize: '0.8rem', marginTop: '0.4rem', display: 'block' }}>
+      {text}
+    </span>
+  );
+}
+
 export default function ContactPage() {
   const {
     form,
     setForm,
-    submit
+    submit,
+    status,
+    message,
+    fieldErrors
   } = useContact();
   const [consent, setConsent] = useState(false);
 
@@ -50,8 +61,10 @@ export default function ContactPage() {
                 value={form.firstName}
                 onChange={handleChange}
                 className={styles.input}
+                aria-invalid={!!fieldErrors.firstName}
                 required
               />
+              {fieldErrors.firstName && <FieldError text={fieldErrors.firstName} />}
             </div>
             <div className={styles.field}>
               <label className={styles.label} htmlFor="lastName">Last Name</label>
@@ -63,8 +76,10 @@ export default function ContactPage() {
                 value={form.lastName}
                 onChange={handleChange}
                 className={styles.input}
+                aria-invalid={!!fieldErrors.lastName}
                 required
               />
+              {fieldErrors.lastName && <FieldError text={fieldErrors.lastName} />}
             </div>
           </div>
 
@@ -91,8 +106,10 @@ export default function ContactPage() {
                 value={form.email}
                 onChange={handleChange}
                 className={styles.input}
+                aria-invalid={!!fieldErrors.email}
                 required
               />
+              {fieldErrors.email && <FieldError text={fieldErrors.email} />}
             </div>
           </div>
 
@@ -110,9 +127,42 @@ export default function ContactPage() {
             </span>
           </label>
 
-          <button type="submit" className="btn-gold" disabled={!consent}>
-            Submit
+          {/* Honeypot: hidden from humans and screen readers, tempting to bots. */}
+          <input
+            type="text"
+            name="company"
+            value={form.company}
+            onChange={handleChange}
+            tabIndex={-1}
+            autoComplete="off"
+            aria-hidden="true"
+            style={{
+              position: 'absolute',
+              left: '-9999px',
+              width: 1,
+              height: 1,
+              opacity: 0,
+            }}
+          />
+
+          <button type="submit" className="btn-gold" disabled={!consent || status === 'submitting'}>
+            {status === 'submitting' ? 'Sending…' : 'Submit'}
           </button>
+
+          {message && (
+            <p
+              role="status"
+              aria-live="polite"
+              style={{
+                marginTop: '1rem',
+                fontSize: '0.9rem',
+                lineHeight: 1.6,
+                color: status === 'success' ? '#4ade80' : '#f87171',
+              }}
+            >
+              {message}
+            </p>
+          )}
         </form>
       </div>
     </div>
