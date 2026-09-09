@@ -1,4 +1,12 @@
-name: Deploy Dev to GitHub Pages
+name: Content & Accessibility Checks
+
+# Runs spellcheck and an accessibility scan on every push to dev and every PR
+# into main. This used to also build a STATIC_EXPORT (output: export) copy of
+# the site and deploy it to GitHub Pages, but that's fundamentally
+# incompatible with the Stripe/Supabase API routes added later (force-dynamic
+# route handlers can't exist in a static export at all — Next.js hard-errors
+# on it) and was redundant besides: Vercel already deploys dev on every push
+# and PR with full server support. Removed rather than worked around.
 
 on:
   push:
@@ -10,27 +18,23 @@ on:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
-  # A static "pages" group would make a PR run and a dev-push run cancel each
-  # other, since they'd share the same group name regardless of event. Key by
-  # PR number for pull_request events and by ref for push events so the two
-  # trigger paths stay isolated, while same-PR / same-branch reruns still
-  # cancel their predecessor as before.
-  group: pages-${{ github.event.pull_request.number || github.ref }}
+  # Key by PR number for pull_request events and by ref for push events so a
+  # PR run and a dev-push run never cancel each other, while same-PR /
+  # same-branch reruns still cancel their predecessor as before.
+  group: checks-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
-  build:
+  checks:
     runs-on: ubuntu-latest
     # The actual Next.js project lives in frontend/, not the repo root (see
     # frontend/package.json). Every plain `run:` step below is relative to
     # this. This does NOT apply to `uses:` steps' own `with:` inputs (e.g.
-    # actions/checkout, actions/setup-node's cache-dependency-path, or
-    # upload-pages-artifact's path) — those still need frontend/ spelled out
-    # explicitly, since they're action inputs, not shell commands.
+    # actions/checkout, actions/setup-node's cache-dependency-path) — those
+    # still need frontend/ spelled out explicitly, since they're action
+    # inputs, not shell commands.
     defaults:
       run:
         working-directory: frontend
@@ -57,11 +61,9 @@ jobs:
         id: install-and-test
         run: npm install && npm test
 
-      - name: Build static export
-        id: build-static-export
+      - name: Build
+        id: build
         run: npm run build
-        env:
-          STATIC_EXPORT: true
 
       - name: Spell check
         id: spellcheck
@@ -103,16 +105,21 @@ jobs:
           echo "::error::Spellcheck found issues, see the group above."
           exit 1
 
-      - name: Serve static export for accessibility check
-        id: serve-static-export
+      - name: Serve built app for accessibility check
+        id: serve-app
         if: always()
+        # `next start` (a real server), not a static export — the pages
+        # under test don't call the API routes on render, and both
+        # lib/stripe.ts and lib/supabaseAdmin.ts construct their clients
+        # lazily inside functions, so this boots fine with no Stripe/
+        # Supabase secrets configured.
         run: |
-          (cd out && python3 -m http.server 4173 &)
+          npx next start -p 4173 &
           for i in $(seq 1 30); do
             curl -sf http://localhost:4173 > /dev/null && exit 0
             sleep 1
           done
-          echo "::error::Static export never came up on :4173" && exit 1
+          echo "::error::Next server never came up on :4173" && exit 1
 
       - name: accessibility analysis
         id: a11y
@@ -126,7 +133,7 @@ jobs:
         # `yarn check` reports them "not installed" and exits 1). Confirmed
         # present since this action's very first commit — no earlier working
         # version exists to pin to instead. continue-on-error here so this
-        # upstream bug doesn't block every deploy until alcash55/ac-composite-
+        # upstream bug doesn't block every run until alcash55/ac-composite-
         # actions fixes accessibility/axe-check/action.yml (yarn check should
         # be yarn run check). Remove continue-on-error once that's fixed.
         continue-on-error: true
@@ -165,17 +172,17 @@ jobs:
         env:
           OUTCOME_setup_node: ${{ steps.setup-node.outcome }}
           OUTCOME_install_and_test: ${{ steps.install-and-test.outcome }}
-          OUTCOME_build_static_export: ${{ steps.build-static-export.outcome }}
+          OUTCOME_build: ${{ steps.build.outcome }}
           OUTCOME_spellcheck_check: ${{ steps.spellcheck-check.outcome }}
-          OUTCOME_serve_static_export: ${{ steps.serve-static-export.outcome }}
+          OUTCOME_serve_app: ${{ steps.serve-app.outcome }}
           OUTCOME_a11y_check: ${{ steps.a11y-check.outcome }}
         run: |
           declare -A STEP_OUTCOMES=(
             ["setup-node"]="$OUTCOME_setup_node"
             ["install-and-test"]="$OUTCOME_install_and_test"
-            ["build-static-export"]="$OUTCOME_build_static_export"
+            ["build"]="$OUTCOME_build"
             ["spellcheck-check"]="$OUTCOME_spellcheck_check"
-            ["serve-static-export"]="$OUTCOME_serve_static_export"
+            ["serve-app"]="$OUTCOME_serve_app"
             ["a11y-check"]="$OUTCOME_a11y_check"
           )
 
@@ -185,30 +192,3 @@ jobs:
               echo "  - $id"
             fi
           done
-
-      - name: Create 404 fallback for client-side routing
-        id: create-404-fallback
-        run: cp out/index.html out/404.html
-
-      - name: Upload Pages artifact
-        id: upload-pages-artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          # An action input, not a shell command — the job's
-          # defaults.run.working-directory doesn't apply here.
-          path: frontend/out
-
-  deploy:
-    needs: build
-    # GitHub Pages only deploys dev — a pull_request run (targeting main, see
-    # deploy-prod.yml for the actual prod deploy) only needs the build +
-    # checks above as a required status check, never this job.
-    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4

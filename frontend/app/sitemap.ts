@@ -1,5 +1,9 @@
 import type { MetadataRoute } from 'next';
 
+// `output: export` (STATIC_EXPORT builds) requires every route to be
+// explicitly static — see the identical note in app/robots.ts.
+export const dynamic = 'force-static';
+
 // Update this if the canonical domain ever changes. It should match
 // NEXT_PUBLIC_SITE_URL in the Vercel environment variables.
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://apexfitness.fit';
