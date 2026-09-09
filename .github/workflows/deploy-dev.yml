@@ -135,18 +135,17 @@ jobs:
       - name: accessibility analysis
         id: a11y
         if: always()
-        # TEMPORARY: this action's own action.yml runs bare `yarn check`
-        # inside its install step, which in Yarn Classic is a reserved
-        # built-in (dependency-lockfile integrity checker) that shadows the
-        # action's own package.json "check" script — it never actually runs
-        # the accessibility check, and always fails on a --production
-        # install (which correctly omits devDependencies like vitest, so
-        # `yarn check` reports them "not installed" and exits 1). Confirmed
-        # present since this action's very first commit — no earlier working
-        # version exists to pin to instead. continue-on-error here so this
-        # upstream bug doesn't block every run until alcash55/ac-composite-
-        # actions fixes accessibility/axe-check/action.yml (yarn check should
-        # be yarn run check). Remove continue-on-error once that's fixed.
+        # TEMPORARY: upstream bug in this action, tracked at
+        # alcash55/ac-composite-actions#27 — self-driven mode
+        # (BASE_URL+ROUTES, what we use) calls browser.newPage() instead of
+        # browser.newContext() + context.newPage() in
+        # accessibility/axe-check/index.js's runAxeSelfDriven(), which
+        # @axe-core/playwright rejects with "Please use browser.newContext()".
+        # This is a *different* bug than the one originally here (bare
+        # `yarn check` shadowing the action's own package.json script,
+        # alcash55/ac-composite-actions#47 — fixed and merged in #48, so
+        # that part is no longer why this fails). continue-on-error stays
+        # until #27 lands. Remove it once that's fixed.
         continue-on-error: true
         uses: alcash55/ac-composite-actions/accessibility/axe-check@main
         with:
