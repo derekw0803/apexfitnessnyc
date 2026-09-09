@@ -25,6 +25,15 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # The actual Next.js project lives in frontend/, not the repo root (see
+    # frontend/package.json). Every plain `run:` step below is relative to
+    # this. This does NOT apply to `uses:` steps' own `with:` inputs (e.g.
+    # actions/checkout, actions/setup-node's cache-dependency-path, or
+    # upload-pages-artifact's path) — those still need frontend/ spelled out
+    # explicitly, since they're action inputs, not shell commands.
+    defaults:
+      run:
+        working-directory: frontend
     steps:
       - name: Checkout
         id: checkout
@@ -34,8 +43,15 @@ jobs:
         id: setup-node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # vitest 5 (frontend/package.json) requires Node ^22.12/^24/>=26 to
+          # even run, not just as an @types/node peer range — matches the
+          # Node 24.x this project's Vercel deployment already targets.
+          node-version: 24
           cache: npm
+          # Without this, setup-node's cache step looks for the lockfile at
+          # the repo root by default and fails outright ("Dependencies lock
+          # file is not found") since it lives at frontend/package-lock.json.
+          cache-dependency-path: frontend/package-lock.json
 
       - name: install dependencies and run tests
         id: install-and-test
@@ -101,6 +117,19 @@ jobs:
       - name: accessibility analysis
         id: a11y
         if: always()
+        # TEMPORARY: this action's own action.yml runs bare `yarn check`
+        # inside its install step, which in Yarn Classic is a reserved
+        # built-in (dependency-lockfile integrity checker) that shadows the
+        # action's own package.json "check" script — it never actually runs
+        # the accessibility check, and always fails on a --production
+        # install (which correctly omits devDependencies like vitest, so
+        # `yarn check` reports them "not installed" and exits 1). Confirmed
+        # present since this action's very first commit — no earlier working
+        # version exists to pin to instead. continue-on-error here so this
+        # upstream bug doesn't block every deploy until alcash55/ac-composite-
+        # actions fixes accessibility/axe-check/action.yml (yarn check should
+        # be yarn run check). Remove continue-on-error once that's fixed.
+        continue-on-error: true
         uses: alcash55/ac-composite-actions/accessibility/axe-check@main
         with:
           BASE_URL: http://localhost:4173
@@ -134,6 +163,7 @@ jobs:
         id: report-failed-steps
         if: failure()
         env:
+          OUTCOME_setup_node: ${{ steps.setup-node.outcome }}
           OUTCOME_install_and_test: ${{ steps.install-and-test.outcome }}
           OUTCOME_build_static_export: ${{ steps.build-static-export.outcome }}
           OUTCOME_spellcheck_check: ${{ steps.spellcheck-check.outcome }}
@@ -141,6 +171,7 @@ jobs:
           OUTCOME_a11y_check: ${{ steps.a11y-check.outcome }}
         run: |
           declare -A STEP_OUTCOMES=(
+            ["setup-node"]="$OUTCOME_setup_node"
             ["install-and-test"]="$OUTCOME_install_and_test"
             ["build-static-export"]="$OUTCOME_build_static_export"
             ["spellcheck-check"]="$OUTCOME_spellcheck_check"
@@ -163,7 +194,9 @@ jobs:
         id: upload-pages-artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: out
+          # An action input, not a shell command — the job's
+          # defaults.run.working-directory doesn't apply here.
+          path: frontend/out
 
   deploy:
     needs: build
