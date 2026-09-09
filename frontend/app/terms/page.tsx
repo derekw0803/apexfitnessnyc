@@ -92,7 +92,7 @@ export default function TermsPage() {
           <p>
             All program materials, training protocols, written content, and media on this site are
             owned by APEX. When you purchase a program you receive a personal, non-transferable
-            licence to use those materials for your own training. You may not resell, redistribute,
+            license to use those materials for your own training. You may not resell, redistribute,
             publish, or share them, or use them to coach others commercially.
           </p>
 

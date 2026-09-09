@@ -13,7 +13,7 @@ export const metadata = {
  *
  * We re-fetch the session from Stripe rather than trusting query params, so
  * this page cannot be spoofed by visiting the URL with a made-up session id.
- * Fulfilment itself still happens in the webhook — this page is only display.
+ * Fulfillment itself still happens in the webhook — this page is only display.
  */
 export default async function CheckoutSuccessPage({
   searchParams,

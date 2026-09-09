@@ -74,7 +74,18 @@ jobs:
           # stays empty. EXTENSIONS must be set explicitly or the action's
           # check step is skipped entirely (empty DIFF + empty EXTENSIONS
           # reads as "no PR files changed", not "check everything").
-          EXTENSIONS: ts,tsx,html,md,mdx,json
+          #
+          # This action's whole-checkout glob is a plain `git ls-files`
+          # filtered by extension — it isn't scoped to this job's
+          # working-directory, and there's no path-prefix input to narrow
+          # it further. md/mdx and json were dropped deliberately: with them
+          # included this also globs backend/.agents/skills/**/*.md (vendored
+          # third-party reference docs, not our content — dozens of false
+          # positives from Postgres/SQL jargon) and every package-lock.json
+          # in the repo (npm package name fragments, 80+ "issues" each).
+          # ts/tsx/html covers the actual site source, which is where the
+          # user-facing copy this check exists for actually lives.
+          EXTENSIONS: ts,tsx,html
           # Project vocabulary (brand names, physiology terms, font names,
           # etc.) merged with the action's shared baseline via cspell's own
           # "import" mechanism. Built from a real cspell run against this

@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic';
  *
  * This is the ONLY trustworthy signal that a payment succeeded. The browser
  * being redirected to /checkout/success proves nothing — anyone can visit that
- * URL directly. Fulfilment must hang off this endpoint.
+ * URL directly. Fulfillment must hang off this endpoint.
  *
  * We read the raw request body with request.text(); parsing it first would
  * break signature verification.
