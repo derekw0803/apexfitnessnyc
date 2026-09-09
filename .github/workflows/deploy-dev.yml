@@ -1,0 +1,181 @@
+name: Deploy Dev to GitHub Pages
+
+on:
+  push:
+    branches:
+      - dev
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  # A static "pages" group would make a PR run and a dev-push run cancel each
+  # other, since they'd share the same group name regardless of event. Key by
+  # PR number for pull_request events and by ref for push events so the two
+  # trigger paths stay isolated, while same-PR / same-branch reruns still
+  # cancel their predecessor as before.
+  group: pages-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        id: checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        id: setup-node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: install dependencies and run tests
+        id: install-and-test
+        run: npm install && npm test
+
+      - name: Build static export
+        id: build-static-export
+        run: npm run build
+        env:
+          STATIC_EXPORT: true
+
+      - name: Spell check
+        id: spellcheck
+        if: always()
+        uses: alcash55/ac-composite-actions/markdown-checks/spellcheck@main
+        with:
+          # No pull_request context on a push-triggered workflow, so DIFF
+          # stays empty. EXTENSIONS must be set explicitly or the action's
+          # check step is skipped entirely (empty DIFF + empty EXTENSIONS
+          # reads as "no PR files changed", not "check everything").
+          EXTENSIONS: ts,tsx,html,md,mdx,json
+          # Project vocabulary (brand names, physiology terms, font names,
+          # etc.) merged with the action's shared baseline via cspell's own
+          # "import" mechanism. Built from a real cspell run against this
+          # site's content — see the file's own header comment.
+          DICTIONARY: frontend/.cspell-project.json
+
+      # The action above only reports SPELL_ERRORS, it never fails its own
+      # step — this step turns a non-empty result into a real step failure
+      # so the aggregator below can key off `steps.spellcheck-check.outcome`
+      # instead of re-parsing JSON output.
+      - name: Check spellcheck results
+        id: spellcheck-check
+        if: always()
+        env:
+          # Env var rather than inline interpolation: this is cspell text
+          # pulled from this site's own prose, which is full of contractions
+          # ("isn't", "doesn't"). Interpolating "${{ ... }}" directly inside a
+          # quoted shell string breaks on the first embedded apostrophe.
+          SPELLCHECK_RESULT: ${{ steps.spellcheck.outputs.SPELL_ERRORS }}
+        run: |
+          if [ -z "$SPELLCHECK_RESULT" ] || [ "$SPELLCHECK_RESULT" = '[]' ]; then
+            echo "Spellcheck: no issues"
+            exit 0
+          fi
+          echo "::group::Spellcheck violations"
+          echo "$SPELLCHECK_RESULT"
+          echo "::endgroup::"
+          echo "::error::Spellcheck found issues, see the group above."
+          exit 1
+
+      - name: Serve static export for accessibility check
+        id: serve-static-export
+        if: always()
+        run: |
+          (cd out && python3 -m http.server 4173 &)
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:4173 > /dev/null && exit 0
+            sleep 1
+          done
+          echo "::error::Static export never came up on :4173" && exit 1
+
+      - name: accessibility analysis
+        id: a11y
+        if: always()
+        uses: alcash55/ac-composite-actions/accessibility/axe-check@main
+        with:
+          BASE_URL: http://localhost:4173
+          ROUTES: "/ /about /about-me /training /pricing /contact /privacy /terms /checkout/cancelled"
+
+      # Same reasoning as spellcheck-check above: axe-check only reports
+      # AXE_VIOLATIONS, it never fails its own step.
+      - name: Check accessibility results
+        id: a11y-check
+        if: always()
+        env:
+          A11Y_RESULT: ${{ steps.a11y.outputs.AXE_VIOLATIONS }}
+        run: |
+          if [ -z "$A11Y_RESULT" ] || [ "$A11Y_RESULT" = '[]' ]; then
+            echo "Accessibility: no issues"
+            exit 0
+          fi
+          echo "::group::Accessibility violations"
+          echo "$A11Y_RESULT"
+          echo "::endgroup::"
+          echo "::error::Accessibility found issues, see the group above."
+          exit 1
+
+      # Every step this job cares about has `if: always()`, so a failure in
+      # one (e.g. spellcheck-check) never skips the rest (e.g. a11y-check) —
+      # they all run and each fails independently when it finds a problem.
+      # This step only runs once something already failed (if: failure()),
+      # and just names which step ids did, by reading each one's own
+      # `.outcome` rather than re-deriving pass/fail from output JSON.
+      - name: Report failed steps
+        id: report-failed-steps
+        if: failure()
+        env:
+          OUTCOME_install_and_test: ${{ steps.install-and-test.outcome }}
+          OUTCOME_build_static_export: ${{ steps.build-static-export.outcome }}
+          OUTCOME_spellcheck_check: ${{ steps.spellcheck-check.outcome }}
+          OUTCOME_serve_static_export: ${{ steps.serve-static-export.outcome }}
+          OUTCOME_a11y_check: ${{ steps.a11y-check.outcome }}
+        run: |
+          declare -A STEP_OUTCOMES=(
+            ["install-and-test"]="$OUTCOME_install_and_test"
+            ["build-static-export"]="$OUTCOME_build_static_export"
+            ["spellcheck-check"]="$OUTCOME_spellcheck_check"
+            ["serve-static-export"]="$OUTCOME_serve_static_export"
+            ["a11y-check"]="$OUTCOME_a11y_check"
+          )
+
+          echo "::error::The following steps failed:"
+          for id in "${!STEP_OUTCOMES[@]}"; do
+            if [ "${STEP_OUTCOMES[$id]}" = "failure" ]; then
+              echo "  - $id"
+            fi
+          done
+
+      - name: Create 404 fallback for client-side routing
+        id: create-404-fallback
+        run: cp out/index.html out/404.html
+
+      - name: Upload Pages artifact
+        id: upload-pages-artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: out
+
+  deploy:
+    needs: build
+    # GitHub Pages only deploys dev — a pull_request run (targeting main, see
+    # deploy-prod.yml for the actual prod deploy) only needs the build +
+    # checks above as a required status check, never this job.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
