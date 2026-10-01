@@ -14,15 +14,30 @@ Maps each exercise's `target` (falling back to `body_part`) onto one of the
 chest/back/arm/shoulder work; "Upper body" is left unused (see the schema
 migration's note on the overlap between those two categories);
 cardio has no fitting category and is imported with workout_category_id
-left null.
+left null. Stretches (Mobility movement pattern) go to
+"Mobility/Stabilization" whatever their target muscle.
+
+Each exercise also gets a movement pattern ("functionality") from
+exercise_taxonomy.classify_movement_pattern(), stored in
+exercises.movement_pattern_id.
+
+Re-running is safe: rows upsert on external_id.
 
 Usage:
     python3 scripts/import_exercises.py /path/to/exercises.json
+    python3 scripts/import_exercises.py --dry-run /path/to/exercises.json
+
+--dry-run classifies and prints counts without touching Supabase (no
+backend/.env needed).
 """
+import collections
+import functools
 import json
 import os
 import sys
 import urllib.request
+
+from exercise_taxonomy import MOBILITY, MOVEMENT_PATTERNS, classify_movement_pattern
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -38,10 +53,6 @@ def load_env(path):
             env[k.strip()] = v.strip()
     return env
 
-
-ENV = load_env(os.path.join(REPO_ROOT, "backend", ".env"))
-SUPABASE_URL = ENV["SUPABASE_URL"]
-SERVICE_KEY = ENV["SUPABASE_SERVICE_ROLE_KEY"]
 
 # target (preferred) or body_part (fallback) -> workout_categories.name.
 # Anything not listed here (currently just "cardiovascular system" / cardio)
@@ -68,11 +79,24 @@ TARGET_TO_CATEGORY = {
 }
 
 
+def category_for(exercise, movement_pattern):
+    if movement_pattern == MOBILITY:
+        return "Mobility/Stabilization"
+    return TARGET_TO_CATEGORY.get(exercise["target"])
+
+
+@functools.cache
+def supabase_env():
+    return load_env(os.path.join(REPO_ROOT, "backend", ".env"))
+
+
 def api_request(method, path, body=None, prefer=None):
-    url = f"{SUPABASE_URL}/rest/v1/{path}"
+    env = supabase_env()
+    service_key = env["SUPABASE_SERVICE_ROLE_KEY"]
+    url = f"{env['SUPABASE_URL']}/rest/v1/{path}"
     headers = {
-        "apikey": SERVICE_KEY,
-        "Authorization": f"Bearer {SERVICE_KEY}",
+        "apikey": service_key,
+        "Authorization": f"Bearer {service_key}",
         "Content-Type": "application/json",
     }
     if prefer:
@@ -89,28 +113,71 @@ def get_category_ids():
     return {r["name"]: r["id"] for r in rows}
 
 
+def get_movement_pattern_ids():
+    rows = api_request("GET", "movement_patterns?select=id,name")
+    ids = {r["name"]: r["id"] for r in rows}
+    missing = set(MOVEMENT_PATTERNS) - set(ids)
+    if missing:
+        sys.exit(
+            f"movement_patterns is missing {sorted(missing)} -- apply the "
+            "20261001000000_add_exercise_movement_patterns migration first."
+        )
+    return ids
+
+
+def print_summary(classified):
+    for label, key in (
+        ("Category", "category"),
+        ("Movement pattern", "pattern"),
+        ("Body part", "body_part"),
+    ):
+        counts = collections.Counter(c[key] or "(none)" for c in classified)
+        print(f"\n{label}:")
+        for name, n in counts.most_common():
+            print(f"  {n:5d}  {name}")
+
+
 def main():
-    if len(sys.argv) != 2:
-        print(f"Usage: {sys.argv[0]} /path/to/exercises.json", file=sys.stderr)
+    args = sys.argv[1:]
+    dry_run = "--dry-run" in args
+    args = [a for a in args if a != "--dry-run"]
+    if len(args) != 1:
+        print(f"Usage: {sys.argv[0]} [--dry-run] /path/to/exercises.json", file=sys.stderr)
         sys.exit(1)
 
-    with open(sys.argv[1]) as f:
+    with open(args[0]) as f:
         data = json.load(f)
+
+    classified = []
+    for e in data:
+        pattern = classify_movement_pattern(e["name"], e["target"])
+        classified.append(
+            {"exercise": e, "pattern": pattern, "category": category_for(e, pattern),
+             "body_part": e["body_part"]}
+        )
+
+    if dry_run:
+        print(f"Classified {len(classified)} exercises (dry run, nothing written).")
+        print_summary(classified)
+        return
 
     categories = get_category_ids()
     print(f"Loaded {len(categories)} workout categories: {list(categories)}")
+    patterns = get_movement_pattern_ids()
+    print(f"Loaded {len(patterns)} movement patterns.")
 
     uncategorized = set()
     rows = []
-    for e in data:
-        category_name = TARGET_TO_CATEGORY.get(e["target"])
-        if not category_name:
+    for c in classified:
+        e = c["exercise"]
+        if not c["category"]:
             uncategorized.add(e["target"])
         rows.append(
             {
                 "external_id": e["id"],
                 "name": e["name"],
-                "workout_category_id": categories.get(category_name),
+                "workout_category_id": categories.get(c["category"]),
+                "movement_pattern_id": patterns[c["pattern"]],
                 "body_part": e["body_part"],
                 "target_muscle": e["target"],
                 "secondary_muscles": e.get("secondary_muscles") or [],
