@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from 'react';
 const TICKER_ITEMS = [
   '90-Day Transformation System',
   'Men 40+ Only',
-  '$300/Month, Less Than Any Competitor',
   'Hormone-Optimized Nutrition',
   "NYC's #1 Senior Men's Program",
   '97% Completion Rate',
@@ -79,7 +78,6 @@ const COMPARE = [
   { feature: 'Nutrition & Meal Tracking', apex: 'Included — Macro Tracking Dashboard', competitors: 'Not Included' },
   { feature: 'Weekly Progress Check-ins', apex: 'Included', competitors: 'Not Included' },
   { feature: 'Community Access', apex: 'Included', competitors: 'Not Included' },
-  { feature: 'Cost', apex: '$300 / mo — All-Inclusive', competitors: '$15–$30/mo apps · $800+/mo trainers' },
 ];
 
 const FAQS = [
@@ -147,8 +145,8 @@ export default function Home() {
             <a className="btn-outline" href="/training">See Real Results</a>
           </div>
         </div>
-        <a href="#ticker" style={{ position: 'absolute', bottom: '2.5rem', left: '5vw', display: 'flex', alignItems: 'center', gap: '0.5rem', fontFamily: "'Barlow Condensed', sans-serif", fontSize: '0.75rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--muted)', animation: 'bounce 2s infinite' }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9" /></svg>
+        <a href="#ticker" aria-label="Scroll to the next section" style={{ position: 'absolute', bottom: '2.5rem', left: '5vw', display: 'flex', alignItems: 'center', gap: '0.5rem', fontFamily: "'Barlow Condensed', sans-serif", fontSize: '0.75rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--muted)', animation: 'bounce 2s infinite' }}>
+          <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9" /></svg>
         </a>
       </section>
 
@@ -170,14 +168,13 @@ export default function Home() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '3rem' }}>
             {[
               // { val: 90, suffix: 'd', label: 'Transformation Window', sub: 'Guaranteed visible results or full refund' },
-              { val: 300, prefix: '$', label: 'Per Month', sub: 'vs. $800 NYC personal trainer average — 62% less' },
               // { val:, suffix: '+', label: 'NYC Members', sub: 'Men who chose to finish what they started' },
               { val: 97, suffix: '%', label: 'Completion Rate', sub: 'vs. 22% industry average for fitness programs' },
               { val: 22, suffix: 'lb', label: 'Avg. Fat Loss', sub: 'Average across 90-day program completers' },
             ].map((s, i) => (
               <div key={i}>
                 <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 'clamp(2.5rem, 4vw, 3.5rem)', color: 'var(--gold)', lineHeight: 1 }}>
-                  <Counter target={s.val} suffix={s.suffix ?? ''} prefix={s.prefix ?? ''} />
+                  <Counter target={s.val} suffix={s.suffix ?? ''} />
                 </div>
                 <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--cream)', marginTop: '0.5rem', marginBottom: '0.25rem', fontSize: '0.9rem' }}>{s.label}</div>
                 <div style={{ color: 'var(--muted)', fontSize: '0.82rem', lineHeight: 1.5 }}>{s.sub}</div>
@@ -200,7 +197,7 @@ export default function Home() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
             {SCIENCE.map((s) => (
               <div key={s.num} style={{ display: 'grid', gridTemplateColumns: '80px 1fr', gap: '2rem', padding: '2.5rem 0', borderBottom: '1px solid var(--border)' }}>
-                <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '2.5rem', color: 'var(--gold)', opacity: 0.5, lineHeight: 1 }}>{s.num}</span>
+                <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '2.5rem', color: 'var(--gold)', opacity: 0.6, lineHeight: 1 }}>{s.num}</span>
                 <div>
                   <h3 style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '1.1rem', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--cream)', marginBottom: '0.75rem' }}>{s.title}</h3>
                   <p style={{ color: 'var(--muted)', lineHeight: 1.7, fontSize: '0.95rem' }}>{s.body}</p>

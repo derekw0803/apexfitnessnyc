@@ -24,6 +24,17 @@
 .navLinks a { color: var(--muted); transition: color 0.2s; }
 .navLinks a:hover { color: var(--cream); }
 
+.navLogoutBtn {
+  font: inherit;
+  color: var(--muted);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.navLogoutBtn:hover { color: var(--cream); }
+
 .navActions { display: flex; align-items: center; gap: 1rem; }
 
 .navCtaBtn {
@@ -114,6 +125,20 @@
   transition: color 0.2s;
 }
 .drawerLinks li a:hover { color: var(--gold); }
+.drawerLogoutBtn {
+  display: block;
+  font: inherit;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(2.5rem, 10vw, 4rem);
+  letter-spacing: 0.08em;
+  color: var(--cream);
+  padding: 0.4rem 2rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.drawerLogoutBtn:hover { color: var(--gold); }
 
 .drawerCta {
   font-family: 'Barlow Condensed', sans-serif;

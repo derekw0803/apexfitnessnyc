@@ -71,6 +71,24 @@ export async function POST(request: NextRequest) {
 
         if (error) throw error;
         console.log('[webhook] recorded order for session', session.id);
+
+        // Authenticated-client purchases (via /payments, /api/payments/checkout)
+        // carry client_id in metadata; anonymous /pricing purchases don't. This
+        // branch is purely additive — the orders upsert above always runs the
+        // same way regardless.
+        if (session.metadata?.client_id) {
+          const { error: paymentError } = await getDb().from('training_payments').insert({
+            client_id: session.metadata.client_id,
+            payment_date: new Date().toISOString().slice(0, 10),
+            amount_cents: session.amount_total,
+            note: session.metadata?.plan_name
+              ? `Payment for ${session.metadata.plan_name}`
+              : null,
+          });
+
+          if (paymentError) throw paymentError;
+          console.log('[webhook] recorded training_payment for client', session.metadata.client_id);
+        }
         break;
       }
 
