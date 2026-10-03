@@ -1,0 +1,124 @@
+.header {
+  max-width: 600px;
+  margin-bottom: 4rem;
+}
+
+.form {
+  max-width: 860px;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 0.75rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.input {
+  background: var(--charcoal);
+  border: 1px solid var(--border);
+  color: var(--cream);
+  padding: 1rem 1.25rem;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 0.95rem;
+  letter-spacing: 0.05em;
+  width: 100%;
+  transition: border-color 0.2s;
+}
+.input::placeholder { color: var(--muted); }
+.input:focus {
+  outline: none;
+  border-color: var(--gold);
+}
+.input:disabled {
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+.hint {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.links {
+  display: flex;
+  gap: 2rem;
+  margin-top: 3rem;
+  flex-wrap: wrap;
+}
+.links a {
+  color: var(--gold);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 0.85rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.dangerBox {
+  margin-top: 4rem;
+  padding: 2rem;
+  border: 1px solid rgba(248, 113, 113, 0.3);
+  max-width: 860px;
+}
+.dangerBox h3 {
+  font-family: 'Barlow Condensed', sans-serif;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #f87171;
+  font-size: 1rem;
+  margin-bottom: 1rem;
+}
+.dangerBox p {
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  margin-bottom: 0.75rem;
+}
+
+.btnDanger {
+  display: inline-block;
+  background: transparent;
+  border: 1px solid #f87171;
+  color: #f87171;
+  padding: 0.9rem 2rem;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 0.85rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+}
+.btnDanger:hover:not(:disabled) {
+  background: #f87171;
+  color: var(--black);
+}
+.btnDanger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 600px) {
+  .row { grid-template-columns: 1fr; gap: 1.5rem; }
+}

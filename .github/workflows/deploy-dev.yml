@@ -38,6 +38,19 @@ jobs:
     defaults:
       run:
         working-directory: frontend
+    env:
+      # app/layout.tsx calls lib/auth.ts's getSessionClaims() unconditionally
+      # for every page (it drives the nav's logged-in/logged-out state), which
+      # constructs a Supabase client from these two vars — even just to
+      # render "nobody's logged in" for this job's anonymous page crawl. The
+      # URL must be well-formed (the client does `new URL(...)` on it) or the
+      # build itself fails; the anon key can be any non-empty string, since
+      # auth calls against a fake project just fail gracefully to "no
+      # session" rather than throwing. Real secrets, on purpose: this job
+      # never logs in or touches real data, so there's nothing to protect by
+      # using the actual project's credentials here.
+      NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-anon-key-for-ci-build-only
     steps:
       - name: Checkout
         id: checkout
