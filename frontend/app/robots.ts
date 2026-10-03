@@ -11,6 +11,8 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: '*',
       allow: '/',
+      // Members-only and post-checkout pages stay out of search results.
+      disallow: ['/library', '/checkout/', '/api/'],
     },
     sitemap: 'https://apexfitnessnyc.vercel.app/sitemap.xml',
   };

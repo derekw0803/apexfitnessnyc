@@ -78,7 +78,6 @@ export default function PricingPage() {
         <p style={{
           textAlign: 'center', marginTop: '2rem', color: 'var(--muted)',
           fontSize: '0.78rem', lineHeight: 1.7, maxWidth: 640, marginLeft: 'auto', marginRight: 'auto',
-          opacity: 0.75,
         }}>
           APEX provides fitness and general nutrition coaching. It is not medical care and does not
           replace advice from your physician. Consult your doctor before beginning any exercise or
