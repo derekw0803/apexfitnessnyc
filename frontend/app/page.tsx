@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from 'react';
 const TICKER_ITEMS = [
   '90-Day Transformation System',
   'Men 40+ Only',
-  '$300/Month, Less Than Any Competitor',
   'Hormone-Optimized Nutrition',
   "NYC's #1 Senior Men's Program",
   '97% Completion Rate',
@@ -79,7 +78,6 @@ const COMPARE = [
   { feature: 'Nutrition & Meal Tracking', apex: 'Included — Macro Tracking Dashboard', competitors: 'Not Included' },
   { feature: 'Weekly Progress Check-ins', apex: 'Included', competitors: 'Not Included' },
   { feature: 'Community Access', apex: 'Included', competitors: 'Not Included' },
-  { feature: 'Cost', apex: '$300 / mo — All-Inclusive', competitors: '$15–$30/mo apps · $800+/mo trainers' },
 ];
 
 const FAQS = [
@@ -170,14 +168,13 @@ export default function Home() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '3rem' }}>
             {[
               // { val: 90, suffix: 'd', label: 'Transformation Window', sub: 'Guaranteed visible results or full refund' },
-              { val: 300, prefix: '$', label: 'Per Month', sub: 'vs. $800 NYC personal trainer average — 62% less' },
               // { val:, suffix: '+', label: 'NYC Members', sub: 'Men who chose to finish what they started' },
               { val: 97, suffix: '%', label: 'Completion Rate', sub: 'vs. 22% industry average for fitness programs' },
               { val: 22, suffix: 'lb', label: 'Avg. Fat Loss', sub: 'Average across 90-day program completers' },
             ].map((s, i) => (
               <div key={i}>
                 <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 'clamp(2.5rem, 4vw, 3.5rem)', color: 'var(--gold)', lineHeight: 1 }}>
-                  <Counter target={s.val} suffix={s.suffix ?? ''} prefix={s.prefix ?? ''} />
+                  <Counter target={s.val} suffix={s.suffix ?? ''} />
                 </div>
                 <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--cream)', marginTop: '0.5rem', marginBottom: '0.25rem', fontSize: '0.9rem' }}>{s.label}</div>
                 <div style={{ color: 'var(--muted)', fontSize: '0.82rem', lineHeight: 1.5 }}>{s.sub}</div>

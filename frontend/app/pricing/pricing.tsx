@@ -1,178 +1,79 @@
-'use client';
-
-import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { PLANS, formatDollars } from '@/lib/plans';
+import { PLANS } from '@/lib/plans';
 
 /**
- * NOTE: there is deliberately no card-number form on this page.
+ * Informational only — no prices, no checkout. Purchasing now happens
+ * exclusively through the logged-in /payments page; this page exists to
+ * describe what each month of the program covers for visitors deciding
+ * whether to reach out.
  *
- * Card details are collected by Stripe on Stripe's own hosted checkout page.
- * We never see or transmit a card number, which keeps this site out of PCI
- * scope. Do not reintroduce raw card inputs here.
+ * Pulls name/desc/features straight from lib/plans.ts's PLANS (the same
+ * catalogue checkout still prices from) rather than duplicating that copy,
+ * so this page can't drift out of sync with what the program actually
+ * includes. Only the three month-by-month programs are shown — 1-on-1
+ * coaching and the customized nutrition plan stay purchasable via
+ * /payments but aren't advertised here.
  */
+const MONTH_PLAN_IDS = ['program-1-month', 'program-2-month', 'program-3-month'];
+const monthPlans = MONTH_PLAN_IDS.map((id) => PLANS.find((p) => p.id === id)).filter(
+  (p): p is NonNullable<typeof p> => p !== undefined
+);
+
 export default function PricingPage() {
-  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
-  const [error, setError] = useState<string>('');
-  const [cancelled, setCancelled] = useState(false);
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('checkout') === 'cancelled') setCancelled(true);
-  }, []);
-
-  const startCheckout = async (planId: string) => {
-    setError('');
-    setCancelled(false);
-    setLoadingPlan(planId);
-
-    try {
-      const res = await fetch('/api/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        // Only the plan id goes over the wire. The price is resolved on the
-        // server so it cannot be tampered with.
-        body: JSON.stringify({ planId }),
-      });
-
-      const data = await res.json().catch(() => ({}));
-
-      if (!res.ok || !data.url) {
-        setError(data.error || 'We could not start checkout. Please try again.');
-        setLoadingPlan(null);
-        return;
-      }
-
-      window.location.href = data.url;
-    } catch {
-      setError('We could not reach the payment server. Check your connection and try again.');
-      setLoadingPlan(null);
-    }
-  };
-
   return (
     <div className="section" style={{ minHeight: 'calc(100vh - 72px)' }}>
       <div className="section-inner">
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
-          <div className="section-label" style={{ justifyContent: 'center' }}>Investment</div>
-          <h2 id="pricing" className="section-h2" style={{ margin: '0.5rem 0' }}>The Price of Greatness</h2>
+          <div className="section-label" style={{ justifyContent: 'center' }}>The Program</div>
+          <h2 id="pricing" className="section-h2" style={{ margin: '0.5rem 0' }}>Three Months. One Protocol.</h2>
           <p className="section-sub" style={{ margin: '0 auto', maxWidth: 600 }}>
-            Choose the protocol that fits your commitment level. One-time payment, no
-            subscription, no hidden fees.
+            Here&apos;s what each phase of the program covers. Reach out to get started, or sign in
+            if you&apos;re already a member.
           </p>
         </div>
 
-        {cancelled && (
-          <p
-            role="status"
-            style={{
-              textAlign: 'center', marginBottom: '2rem', color: 'var(--muted)',
-              fontSize: '0.9rem',
-            }}
-          >
-            Checkout cancelled. Nothing was charged. Pick a program below whenever you&apos;re ready.
-          </p>
-        )}
-
-        {error && (
-          <p
-            role="alert"
-            style={{
-              textAlign: 'center', marginBottom: '2rem', color: '#f87171', fontSize: '0.9rem',
-            }}
-          >
-            {error}
-          </p>
-        )}
-
-        {/* Plans */}
+        {/* Program months */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem', alignItems: 'stretch' }}>
-          {PLANS.map((plan) => {
-            const isLoading = loadingPlan === plan.id;
-            const anyLoading = loadingPlan !== null;
-
-            return (
-              <div
-                key={plan.id}
-                style={{
-                  background: 'var(--charcoal)',
-                  border: plan.highlight ? '2px solid var(--gold)' : '1px solid var(--border)',
-                  padding: '3rem 2.5rem',
-                  position: 'relative',
-                  display: 'flex',
-                  flexDirection: 'column',
-                }}
-              >
-                {plan.badge && (
-                  <div style={{
-                    position: 'absolute', top: -1, left: '50%', transform: 'translateX(-50%)',
-                    background: 'var(--gold)', color: 'var(--black)',
-                    padding: '0.25rem 1.5rem',
-                    fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700,
-                    letterSpacing: '0.2em', fontSize: '0.75rem', textTransform: 'uppercase',
-                  }}>
-                    {plan.badge}
-                  </div>
-                )}
-
-                <h3 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '2.5rem', color: plan.highlight ? 'var(--gold)' : 'var(--cream)', marginBottom: '0.5rem', letterSpacing: '0.05em' }}>
-                  {plan.name}
-                </h3>
-
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.25rem', marginBottom: '1rem' }}>
-                  <span style={{ fontSize: '1.5rem', color: 'var(--muted)', marginTop: '0.5rem' }}>$</span>
-                  <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '4.5rem', lineHeight: 1, color: 'var(--cream)' }}>
-                    {formatDollars(plan.amount)}
-                  </span>
-                </div>
-
-                <p style={{ color: 'rgba(240,235,224,0.6)', fontSize: '0.9rem', lineHeight: 1.6, paddingBottom: '2rem', borderBottom: '1px solid rgba(255,255,255,0.05)', marginBottom: '2rem' }}>
-                  {plan.desc}
-                </p>
-
-                <ul style={{ listStyle: 'none', flex: 1 }}>
-                  {plan.features.map((f, j) => (
-                    <li key={j} style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem', fontSize: '0.95rem', color: 'var(--cream)' }}>
-                      <span style={{ color: 'var(--gold)', fontSize: '0.8rem' }}>✓</span>
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-
-                <button
-                  onClick={() => startCheckout(plan.id)}
-                  disabled={anyLoading}
-                  aria-busy={isLoading}
-                  style={{
-                    marginTop: '3rem', width: '100%', padding: '1.25rem', border: 'none',
-                    cursor: anyLoading ? 'wait' : 'pointer',
-                    opacity: anyLoading && !isLoading ? 0.5 : 1,
-                    background: plan.highlight ? 'var(--gold)' : 'rgba(200,168,75,0.1)',
-                    color: plan.highlight ? 'var(--black)' : 'var(--gold)',
-                    fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700,
-                    letterSpacing: '0.15em', textTransform: 'uppercase', fontSize: '1rem',
-                    transition: 'all 0.3s',
-                  }}
-                >
-                  {isLoading ? 'Redirecting…' : 'Get Started'}
-                </button>
+          {monthPlans.map((plan, i) => (
+            <div
+              key={plan.id}
+              style={{
+                background: 'var(--charcoal)',
+                border: '1px solid var(--border)',
+                padding: '3rem 2.5rem',
+                display: 'flex',
+                flexDirection: 'column',
+              }}
+            >
+              <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '0.75rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--gold)', marginBottom: '0.5rem' }}>
+                Month {i + 1}
               </div>
-            );
-          })}
+              <h3 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '2.5rem', color: 'var(--cream)', marginBottom: '1rem', letterSpacing: '0.05em' }}>
+                {plan.name}
+              </h3>
+
+              <p style={{ color: 'rgba(240,235,224,0.6)', fontSize: '0.9rem', lineHeight: 1.6, paddingBottom: '2rem', borderBottom: '1px solid rgba(255,255,255,0.05)', marginBottom: '2rem' }}>
+                {plan.desc}
+              </p>
+
+              <ul style={{ listStyle: 'none', flex: 1 }}>
+                {plan.features.map((f, j) => (
+                  <li key={j} style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem', fontSize: '0.95rem', color: 'var(--cream)' }}>
+                    <span style={{ color: 'var(--gold)', fontSize: '0.8rem' }}>✓</span>
+                    {f}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </div>
 
-        {/* Trust line */}
-        <p style={{
-          textAlign: 'center', marginTop: '4rem', color: 'var(--muted)',
-          fontSize: '0.85rem', lineHeight: 1.8, maxWidth: 640, marginLeft: 'auto', marginRight: 'auto',
-        }}>
-          Payments are processed securely by Stripe. APEX never sees or stores your card details.
-          <br />
-          By purchasing you agree to our{' '}
-          <Link href="/terms" style={{ color: 'var(--gold)' }}>Terms of Service</Link> and{' '}
-          <Link href="/privacy" style={{ color: 'var(--gold)' }}>Privacy Policy</Link>.
-        </p>
+        {/* CTA */}
+        <div style={{ textAlign: 'center', marginTop: '4rem', display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+          <Link className="btn-gold" href="/contact">Get Started</Link>
+          <Link className="btn-outline" href="/login">Member Login</Link>
+        </div>
 
         <p style={{
           textAlign: 'center', marginTop: '2rem', color: 'var(--muted)',
