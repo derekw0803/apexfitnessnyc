@@ -112,7 +112,7 @@ export default function AboutPage() {
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             {CREDENTIALS.map((c) => (
               <div key={c.num} style={{ display: 'grid', gridTemplateColumns: '80px 1fr', gap: '2rem', padding: '2.5rem 0', borderBottom: '1px solid var(--border)' }}>
-                <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '2.5rem', color: 'var(--gold)', opacity: 0.5, lineHeight: 1 }}>{c.num}</span>
+                <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '2.5rem', color: 'var(--gold)', opacity: 0.6, lineHeight: 1 }}>{c.num}</span>
                 <div>
                   <h3 style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '1.1rem', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--cream)', marginBottom: '0.75rem' }}>{c.title}</h3>
                   <p style={{ color: 'var(--muted)', lineHeight: 1.7, fontSize: '0.95rem' }}>{c.body}</p>
