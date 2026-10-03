@@ -10,12 +10,15 @@ import { PLANS } from '@/lib/plans';
  * Pulls name/desc/features straight from lib/plans.ts's PLANS (the same
  * catalogue checkout still prices from) rather than duplicating that copy,
  * so this page can't drift out of sync with what the program actually
- * includes. Only the three month-by-month programs are shown — 1-on-1
- * coaching and the customized nutrition plan stay purchasable via
- * /payments but aren't advertised here.
+ * includes.
  */
 const MONTH_PLAN_IDS = ['program-1-month', 'program-2-month', 'program-3-month'];
 const monthPlans = MONTH_PLAN_IDS.map((id) => PLANS.find((p) => p.id === id)).filter(
+  (p): p is NonNullable<typeof p> => p !== undefined
+);
+
+const ADD_ON_PLAN_IDS = ['coaching-1-on-1', 'nutrition-custom'];
+const addOnPlans = ADD_ON_PLAN_IDS.map((id) => PLANS.find((p) => p.id === id)).filter(
   (p): p is NonNullable<typeof p> => p !== undefined
 );
 
@@ -49,6 +52,43 @@ export default function PricingPage() {
               <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '0.75rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--gold)', marginBottom: '0.5rem' }}>
                 Month {i + 1}
               </div>
+              <h3 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '2.5rem', color: 'var(--cream)', marginBottom: '1rem', letterSpacing: '0.05em' }}>
+                {plan.name}
+              </h3>
+
+              <p style={{ color: 'rgba(240,235,224,0.6)', fontSize: '0.9rem', lineHeight: 1.6, paddingBottom: '2rem', borderBottom: '1px solid rgba(255,255,255,0.05)', marginBottom: '2rem' }}>
+                {plan.desc}
+              </p>
+
+              <ul style={{ listStyle: 'none', flex: 1 }}>
+                {plan.features.map((f, j) => (
+                  <li key={j} style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem', fontSize: '0.95rem', color: 'var(--cream)' }}>
+                    <span style={{ color: 'var(--gold)', fontSize: '0.8rem' }}>✓</span>
+                    {f}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+
+        {/* Add-on services */}
+        <div style={{ textAlign: 'center', margin: '5rem 0 2.5rem' }}>
+          <div className="section-label" style={{ justifyContent: 'center' }}>Also Available</div>
+          <h3 className="section-h2" style={{ margin: '0.5rem 0', fontSize: '2rem' }}>Add-On Services</h3>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem', alignItems: 'stretch' }}>
+          {addOnPlans.map((plan) => (
+            <div
+              key={plan.id}
+              style={{
+                background: 'var(--charcoal)',
+                border: '1px solid var(--border)',
+                padding: '3rem 2.5rem',
+                display: 'flex',
+                flexDirection: 'column',
+              }}
+            >
               <h3 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '2.5rem', color: 'var(--cream)', marginBottom: '1rem', letterSpacing: '0.05em' }}>
                 {plan.name}
               </h3>
