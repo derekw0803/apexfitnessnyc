@@ -124,6 +124,12 @@ export default async function DashboardPage() {
             ) : (
               <EmptyState text="No active offering on file yet. Contact your trainer to get enrolled." />
             )}
+            {/* Same rule as lib/libraryAccess.ts: an active program unlocks the library. */}
+            {client.current_offering_id && (
+              <div style={{ marginTop: '1.5rem' }}>
+                <Link href="/library" className="btn-gold">Open Exercise Library</Link>
+              </div>
+            )}
           </div>
         </section>
 
