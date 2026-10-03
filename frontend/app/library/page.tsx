@@ -34,10 +34,19 @@ export default async function LibraryPage() {
 
   if (access !== 'allowed') return <LockedNotice message={LOCKED_MESSAGES[access]} />;
 
-  const [exercises, patternDescriptions] = await Promise.all([
-    getExercises(),
-    getPatternDescriptions(),
-  ]);
+  let exercises: Awaited<ReturnType<typeof getExercises>>;
+  let patternDescriptions: Awaited<ReturnType<typeof getPatternDescriptions>>;
+  try {
+    [exercises, patternDescriptions] = await Promise.all([getExercises(), getPatternDescriptions()]);
+  } catch (err) {
+    // Most likely the exercise migration/import hasn't been run on this
+    // database yet (see scripts/import_exercises.py).
+    console.error('[library] could not load the exercise catalog:', err);
+    return <LockedNotice message="The exercise library is being set up. Please check back soon." />;
+  }
+  if (exercises.length === 0) {
+    return <LockedNotice message="The exercise library is being set up. Please check back soon." />;
+  }
 
   return (
     <div className="section" style={{ paddingTop: '4rem' }}>

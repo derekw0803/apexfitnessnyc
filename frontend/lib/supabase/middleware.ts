@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
+import { getSupabaseAuthConfig } from '@/lib/supabase/config';
 
 /**
  * Refreshes the Supabase session cookie on every matched request and
@@ -10,9 +11,15 @@ import { NextResponse, type NextRequest } from 'next/server';
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
 
+  const config = getSupabaseAuthConfig();
+  if (!config) {
+    console.error('[middleware] NEXT_PUBLIC_SUPABASE_URL/ANON_KEY unset; treating request as signed out.');
+    return { response, claims: null };
+  }
+
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    config.url,
+    config.anonKey,
     {
       cookies: {
         getAll() {

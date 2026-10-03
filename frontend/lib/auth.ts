@@ -1,5 +1,6 @@
 import { createClient as createServerSupabaseClient } from '@/lib/supabase/server';
 import { getDb } from '@/lib/supabaseAdmin';
+import { getSupabaseAuthConfig } from '@/lib/supabase/config';
 
 export type SessionClaims = {
   sub: string;
@@ -25,6 +26,9 @@ export type SessionClaims = {
  * a plain data source, not a control-flow helper.
  */
 export async function getSessionClaims(): Promise<SessionClaims | null> {
+  // Auth not configured for this deployment: nobody can be signed in.
+  if (!getSupabaseAuthConfig()) return null;
+
   const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase.auth.getClaims();
 
